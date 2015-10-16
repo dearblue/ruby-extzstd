@@ -3,8 +3,26 @@
 VALUE mZstd;
 VALUE eError;
 
+static size_t
+aux_ZSTD_compress_nogvl(va_list *vp)
+{
+    char *dest = va_arg(*vp, char *);
+    size_t destsize = va_arg(*vp, size_t);
+    const char *src = va_arg(*vp, const char *);
+    size_t srcsize = va_arg(*vp, size_t);
+    return ZSTD_compress(dest, destsize, src, srcsize);
+}
+
+static inline size_t
+aux_ZSTD_compress(char *dest, size_t destsize, const char *src, size_t srcsize)
+{
+    return (size_t)aux_thread_call_without_gvl(
+            (void *(*)(void *))aux_ZSTD_compress_nogvl, NULL,
+            dest, destsize, src, srcsize);
+}
+
 static inline void
-zstd_encode_args(int argc, VALUE argv[], VALUE *src, VALUE *dest, size_t *maxsize)
+zstd_s_encode_args(int argc, VALUE argv[], VALUE *src, VALUE *dest, size_t *maxsize)
 {
     switch (argc) {
     case 1:
@@ -46,31 +64,50 @@ zstd_encode_args(int argc, VALUE argv[], VALUE *src, VALUE *dest, size_t *maxsiz
  *  encode(src, size, dest) -> dest with encoded string
  */
 static VALUE
-zstd_encode(int argc, VALUE argv[], VALUE mod)
+zstd_s_encode(int argc, VALUE argv[], VALUE mod)
 {
     VALUE src, dest;
     size_t maxsize;
-    zstd_encode_args(argc, argv, &src, &dest, &maxsize);
+    zstd_s_encode_args(argc, argv, &src, &dest, &maxsize);
     const char *srcp;
     size_t srcsize;
     RSTRING_GETMEM(src, srcp, srcsize);
-    size_t s = ZSTD_compress(RSTRING_PTR(dest), maxsize, srcp, srcsize);
+    rb_obj_infect(dest, src);
+    size_t s = aux_ZSTD_compress(RSTRING_PTR(dest), maxsize, srcp, srcsize);
     if (ZSTD_isError(s)) {
         rb_raise(eError,
-                 "%s:%d:%s: ZSTD_compress error - %s (%d)",
-                 __FILE__, __LINE__, __func__,
-                 ZSTD_getErrorName(s), (int)s);
+                "failed ZSTD_compress - %s(%d) in %s:%d:%s",
+                ZSTD_getErrorName(s), (int)s,
+                __FILE__, __LINE__, __func__);
     }
     if (s > maxsize) {
         rb_bug("%s:%d:%s: detect buffer overflow in ZSTD_compress - maxsize is %zd, but returned size is %zd",
-                 __FILE__, __LINE__, __func__, maxsize, s);
+                __FILE__, __LINE__, __func__, maxsize, s);
     }
     rb_str_set_len(dest, s);
     return dest;
 }
 
+static size_t
+aux_ZSTD_decompress_nogvl(va_list *vp)
+{
+    char *dest = va_arg(*vp, char *);
+    size_t destsize = va_arg(*vp, size_t);
+    const char *src = va_arg(*vp, const char *);
+    size_t srcsize = va_arg(*vp, size_t);
+    return ZSTD_decompress(dest, destsize, src, srcsize);
+}
+
+static inline size_t
+aux_ZSTD_decompress(char *dest, size_t destsize, const char *src, size_t srcsize)
+{
+    return (size_t)aux_thread_call_without_gvl(
+            (void *(*)(void *))aux_ZSTD_decompress_nogvl, NULL,
+            dest, destsize, src, srcsize);
+}
+
 static inline void
-zstd_decode_args(int argc, VALUE argv[], VALUE *src, VALUE *dest, size_t *maxsize)
+zstd_s_decode_args(int argc, VALUE argv[], VALUE *src, VALUE *dest, size_t *maxsize)
 {
     switch (argc) {
     case 2:
@@ -98,35 +135,57 @@ zstd_decode_args(int argc, VALUE argv[], VALUE *src, VALUE *dest, size_t *maxsiz
  *  decode(src, size, dest) -> dest with decoded string
  */
 static VALUE
-zstd_decode(int argc, VALUE argv[], VALUE mod)
+zstd_s_decode(int argc, VALUE argv[], VALUE mod)
 {
     VALUE src, dest;
     size_t maxsize;
-    zstd_decode_args(argc, argv, &src, &dest, &maxsize);
+    zstd_s_decode_args(argc, argv, &src, &dest, &maxsize);
     const char *srcp;
     size_t srcsize;
     RSTRING_GETMEM(src, srcp, srcsize);
-    size_t s = ZSTD_decompress(RSTRING_PTR(dest), maxsize, srcp, srcsize);
+    rb_obj_infect(dest, src);
+    size_t s = aux_ZSTD_decompress(RSTRING_PTR(dest), maxsize, srcp, srcsize);
     if (ZSTD_isError(s)) {
         rb_raise(eError,
-                 "%s:%d:%s: ZSTD_compress error - %s (%d)",
-                 __FILE__, __LINE__, __func__,
-                 ZSTD_getErrorName(s), (int)s);
+                "failed ZSTD_decompress - %s(%d) in %s:%d:%s",
+                ZSTD_getErrorName(s), (int)s,
+                __FILE__, __LINE__, __func__);
     }
     if (s > maxsize) {
         rb_bug("%s:%d:%s: detect buffer overflow in ZSTD_compress - maxsize is %zd, but returned size is %zd",
-                 __FILE__, __LINE__, __func__, maxsize, s);
+                __FILE__, __LINE__, __func__, maxsize, s);
     }
     rb_str_set_len(dest, s);
     return dest;
+}
+
+static VALUE
+libver_s_to_s(VALUE ver)
+{
+    static VALUE str;
+    if (!str) {
+        str = rb_sprintf("%d.%d.%d",
+                ZSTD_VERSION_MAJOR,
+                ZSTD_VERSION_MINOR,
+                ZSTD_VERSION_RELEASE);
+    }
+    return str;
 }
 
 void
 Init_extzstd(void)
 {
     mZstd = rb_define_module("Zstd");
-    rb_define_singleton_method(mZstd, "encode", RUBY_METHOD_FUNC(zstd_encode), -1);
-    rb_define_singleton_method(mZstd, "decode", RUBY_METHOD_FUNC(zstd_decode), -1);
+    rb_define_singleton_method(mZstd, "encode", RUBY_METHOD_FUNC(zstd_s_encode), -1);
+    rb_define_singleton_method(mZstd, "decode", RUBY_METHOD_FUNC(zstd_s_decode), -1);
+
+    VALUE libver = rb_ary_new3(3,
+            INT2FIX(ZSTD_VERSION_MAJOR),
+            INT2FIX(ZSTD_VERSION_MINOR),
+            INT2FIX(ZSTD_VERSION_RELEASE));
+    rb_define_singleton_method(libver, "to_s", RUBY_METHOD_FUNC(libver_s_to_s), 0);
+    rb_obj_freeze(libver);
+    rb_define_const(mZstd, "LIBRARY_VERSION", libver);
 
     eError = rb_define_class_under(mZstd, "Error", rb_eRuntimeError);
 
