@@ -1,22 +1,20 @@
 #!ruby
-#vim: set fileencoding:utf-8
 
 require "mkmf"
 
-dir = File.dirname(__FILE__).gsub(/[\[\{\?\*]/, "[\\0]")
-filepattern = "{.,../contrib/zstd}/*.c"
-target = File.join(dir, filepattern)
-files = Dir.glob(target).map { |n| File.basename n }
-## reject fse.c, because it's included in zstd.c
-files.reject! { |n| "/contrib/zstd/fse.c".include?(n) }
-$srcs = files
+find_header "zstd.h", "$(srcdir)/../contrib/zstd/common" or abort "can't find ``zstd.h''"
+find_header "zdict.h", "$(srcdir)/../contrib/zstd/dictBuilder" or abort "can't find ``zdict.h''"
+find_header "zstd_legacy.h", "$(srcdir)/../contrib/zstd/legacy" or abort "can't find ``zstd_legacy.h''"
 
-$VPATH.push "$(srcdir)/../contrib/zstd"
-
-find_header "zstd.h", "$(srcdir)/../contrib/zstd" or abort 1
+#dir = File.dirname(__FILE__).gsub(/[\[\{\?\*]/, "[\\0]")
+#filepattern = "{.,../contrib/zstd}/**/*.c"
+#target = File.join(dir, filepattern)
+#files = Dir.glob(target).sort.map { |n| File.basename n }
+#$srcs = files
+#$VPATH.push "$(srcdir)/../contrib/zstd", "$(srcdir)/../contrib/zstd/legacy"
 
 if RbConfig::CONFIG["arch"] =~ /mingw/
   $LDFLAGS << " -static-libgcc"
 end
 
-create_makefile("extzstd")
+create_makefile File.join(RUBY_VERSION.slice(/\d+\.\d+/), "extzstd")

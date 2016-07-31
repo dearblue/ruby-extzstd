@@ -1,38 +1,53 @@
-# encoding:utf-8 ;
-
 # extzstd - ruby bindings for Zstd (Zstandard)
 
-This is ruby bindings for compression library
+This is unofficial ruby bindings for compression library
 [Zstd (https://github.com/Cyan4973/zstd)](https://github.com/Cyan4973/zstd).
 
   * package name: extzstd
-  * author: dearblue (mailto:dearblue@users.osdn.me)
-  * version: 0.0.2.CONCEPT
+  * version: 0.0.3.CONCEPT
   * software quality: EXPERIMENTAL
   * license: 2-clause BSD License
-  * report issue to: https://osdn.jp/projects/rutsubo/ticket/
+  * author: dearblue <mailto:dearblue@users.osdn.me>
+  * report issue to: <https://osdn.jp/projects/rutsubo/ticket/>
   * dependency ruby: ruby-2.0+
   * dependency ruby gems: (none)
   * dependency library: (none)
-  * bundled external libraries:
-      * zstd-0.1.2 (https://github.com/Cyan4973/zstd/tree/zstd-0.1.2)
+  * bundled external C library:
+      * zstd-0.7.4 <https://github.com/Cyan4973/zstd/tree/v0.7.4>
+
+"extzstd" is supported the legacy formats (zstd-0.1 - 0.6).
 
 
-## ***WARNING***
+## Quick API Reference
 
-Zstd data format compatibility is not guaranteed in future versions
-(There is a possibility that it becomes impossible to future use).
+  * Encode
+      * ``Zstd.encode(buf, params = nil, dict = nil) -> encoded string``
+      * ``Zstd.encode(outport, params = nil, dict = nil) -> an instance of Zstd::Encoder``
+      * ``Zstd.encode(outport, params = nil, dict = nil) { |encoder| ... } -> block returned value``
+      * ``Zstd::Encoder#write(buf) -> this instance``
+      * ``Zstd::Encoder#close -> nil``
 
-Written in [zstd/README.md](https://github.com/Cyan4973/zstd/blob/zstd-0.1.2/README.md):
+  * Decode
+      * ``Zstd.decode(zstd_buf, dict = nil) -> decoded string``
+      * ``Zstd.decode(inport, dict = nil) -> an intance of Zstd::Decoder``
+      * ``Zstd.decode(inport, dict = nil) { |decoder| ... } -> block returned value``
+      * ``Zstd::Decoder#read(size = nil, buf = nil) -> buf``
+      * ``Zstd::Decoder#close -> nil``
 
->   Zstd has not yet reached "stable" status. Specifically, it doesn't
->   guarantee yet that its current compressed format will remain stable
->   and supported in future versions.
+  * buffered encoder
+      * ``Zstd::BufferedEncoder.new(params, dict)`` (``ZBUFF_createCCtx``, ``ZBUFF_compressInit_advanced``)
+      * ``Zstd::BufferedEncoder#continue(data, dataoff, dest, maxdest) -> integer as new data offset`` (``ZBUFF_compressContinue``)
+      * ``Zstd::BufferedEncoder#flush(dest, maxdest) -> dest`` (``ZBUFF_compressFlush``)
+      * ``Zstd::BufferedEncoder#end(dest, maxdest) -> dest`` (``ZBUFF_compressEnd``)
+
+  * Train dictionary
+      * ``Zstd.dict_train_from_buffer(buf, dict_capacity) -> dictionary'd string`` (``ZDICT_trainFromBuffer``)
+      * ``Zstd.dict_add_entropy_tables_from_buffer(dict, dict_capacity, sample) -> dict`` (``ZDICT_addEntropyTablesFromBuffer``)
 
 
 ## HOW TO USE
 
-### basic usage (one pass encode/decode)
+### basic usage (simply encode/decode)
 
 ``` ruby:ruby
 # First, load library
@@ -41,19 +56,54 @@ require "extzstd"
 # Prepair data
 source = "sample data..." * 50
 
-# Directly compression
+# simply compression
 encdata = Zstd.encode(source)
 puts "encdata.bytesize=#{encdata.bytesize}"
 
-# Directly decompression
-maxdestsize = source.bytesize
-decdata = Zstd.decode(encdata, maxdestsize)
+# simply decompression
+decdata = Zstd.decode(encdata)
 puts "decdata.bytesize=#{decdata.bytesize}"
 
 # Comparison source and decoded data
 p source == decdata # => true
 ```
 
-----
+### Streaming compression (with block)
 
-[a stub]
+``` ruby:ruby
+outport = StringIO.new("")
+Zstd.encode(outport) do |encoder|
+  encoder.write "abcdefg\n"
+  encoder << "hijklmn\n"
+  encoder.write "opqrstu\n"
+  encoder << "vwxyz\n"
+end
+```
+
+### Streaming compression (without block and write to file)
+
+``` ruby:ruby
+file = File.open("sample.zst", "wb")
+encoder = Zstd.encode(file)
+
+encoder.write "abcdefg\n"
+encoder << "hijklmn\n"
+encoder.write "opqrstu\n"
+encoder << "vwxyz\n"
+
+encoder.close
+file.close
+```
+
+### Streaming decompression (with block and read from file)
+
+``` ruby:ruby
+File.open("sample.zst", "rb") do |file|
+  Zstd.decode(file) do |decoder|
+    p decoder.read(8)  # => "abcdefg\n"
+    p decoder.read(1)  # => "h"
+    p decoder.read(2)  # => "ij"
+    p decoder.read     # => "klmn\nopqrstu\nvwxyz\n"
+  end
+end
+```
