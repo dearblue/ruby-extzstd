@@ -2,8 +2,9 @@
 #define EXTZSTD_H 1
 
 #define ZSTD_LEGACY_SUPPORT 1
-#define ZBUFF_STATIC_LINKING_ONLY 1
-#include <zbuff.h>
+#define ZDICT_STATIC_LINKING_ONLY 1
+#define ZSTD_STATIC_LINKING_ONLY 1
+#include <zstd.h>
 #include <stdarg.h>
 #include <ruby.h>
 #include <ruby/thread.h>
@@ -23,7 +24,7 @@ extern VALUE extzstd_mZstd;
 RDOCFAKE(extzstd_mZstd = rb_define_module("Zstd"));
 
 extern VALUE extzstd_cParams;
-RDOCFAKE(extzstd_cParams = rb_define_class_under(extzstd_mZstd, "EncodeParameters", rb_cObject));
+RDOCFAKE(extzstd_cParams = rb_define_class_under(extzstd_mZstd, "Parameters", rb_cObject));
 
 extern VALUE extzstd_mExceptions;
 extern VALUE extzstd_eError;
@@ -48,13 +49,14 @@ extern VALUE extzstd_eDictionaryWrongError;
 
 extern void init_extzstd_stream(void);
 extern void extzstd_init_buffered(void);
+extern void extzstd_init_stream(void);
 extern void extzstd_error(ssize_t errcode);
 extern void extzstd_check_error(ssize_t errcode);
 extern VALUE extzstd_make_error(ssize_t errcode);
 extern VALUE extzstd_make_errorf(VALUE exc, const char *fmt, ...);
 
-extern ZSTD_parameters *extzstd_getencparams(VALUE v);
-extern int extzstd_encparams_p(VALUE v);
+extern ZSTD_parameters *extzstd_getparams(VALUE v);
+extern int extzstd_params_p(VALUE v);
 extern VALUE extzstd_params_alloc(ZSTD_parameters **p);
 
 static inline void
@@ -161,7 +163,7 @@ aux_num2int_u64(VALUE v, uint64_t default_value)
 }
 
 static inline VALUE
-aux_const_dig_str_0(VALUE obj, const char *p[], const char *pp)
+aux_const_dig_str_0(VALUE obj, const char *p[], const char **pp)
 {
     for (; p < pp; p ++) {
         obj = rb_const_get(obj, rb_intern(*p));

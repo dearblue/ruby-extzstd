@@ -1,24 +1,13 @@
-
-file "lib/extzstd/version.rb" => %w(README.md) do
-  reg = /^\s*\*\s+version:\s*(\d+(?:\.\w+)+)\s*$/i
-  unless File.read("README.md", mode: "rt") =~ reg
-    raise "``version'' is not defined or bad syntax in ``README.md''"
-  end
-
-  GEMSTUB.version = ver = String($1)
-
-  File.write "lib/extzstd/version.rb", <<-"EOS", mode: "wb"
-module Zstd
-  VERSION = #{ver.inspect}
-end
-  EOS
+verreg = /^\s*\*\s+version:\s*(\d+(?:\.\w+)+)\s*$/i
+unless File.read("README.md", mode: "rt") =~ verreg
+  raise "``version'' is not defined or bad syntax in ``README.md''"
 end
 
-require_relative "lib/extzstd/version"
+version = String($1)
 
 GEMSTUB = Gem::Specification.new do |s|
   s.name = "extzstd"
-  s.version = Zstd::VERSION
+  s.version = version
   s.summary = "ruby bindings for Zstandard (zstd)"
   s.description = <<EOS
 unoficial ruby bindings for Zstandard (zstd) <https://github.com/Cyan4973/zstd>.
@@ -30,6 +19,19 @@ EOS
 
   s.required_ruby_version = ">= 2.0"
   s.add_development_dependency "rake"
+end
+
+LIB << "lib/extzstd/version.rb"
+
+file "lib/extzstd/version.rb" => %w(README.md) do
+  GEMSTUB.version = version
+
+  mkpath "lib/extzstd"
+  File.write "lib/extzstd/version.rb", <<-"EOS", mode: "wb"
+module Zstd
+  VERSION = #{version.inspect}
+end
+  EOS
 end
 
 EXTRA.concat(FileList["contrib/**/*"])

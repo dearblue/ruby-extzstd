@@ -18,24 +18,29 @@ class TestZstd < Test::Unit::TestCase
 
   def test_huge
     src = "ABCDEFGabcdefg" * 10000000
-    assert_equal(Digest::MD5.hexdigest(src), Digest::MD5.hexdigest(Zstd.decode(Zstd.encode(src))))
+    resrc = Zstd.decode(Zstd.encode(src))
+    assert_equal(src.bytesize, resrc.bytesize)
+    assert_equal(Digest::MD5.hexdigest(src), Digest::MD5.hexdigest(resrc))
   end
 
   def test_huge_stream
     src = "abcdefghijklmnopqrstuvwxyz" * 1000
+    size_a = 0
     md5a = Digest::MD5.new
     d = StringIO.new("")
-    Zstd.encode(d) { |z| 1000.times { z << src; md5a.update src } }
+    Zstd.encode(d) { |z| 1000.times { z << src; size_a += src.bytesize; md5a.update src } }
     d.pos = 0
+    size_b = 0
     md5b = Digest::MD5.new
-    Zstd.decode(d) { |z| buf = ""; while z.read(654321, buf); md5b.update buf; end }
+    Zstd.decode(d) { |z| buf = ""; while z.read(654321, buf); size_b += buf.bytesize; md5b.update buf; end }
+    assert_equal size_a, size_b
     assert_equal(md5a.hexdigest, md5b.hexdigest)
   end
 
   def test_dictionary
-    dictsrc = "0123456789 ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz" * 10
-    dict = Zstd.dict_train_from_buffer(dictsrc, 10000)
+    dictsrc = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-" * 5
+    dict = Zstd::Dictionary.train_from_buffer(dictsrc, 10000)
     src = "ABCDEFGabcdefg" * 50
-    assert_equal(src, Zstd.decode(Zstd.encode(src, nil, dict), src.bytesize, dict))
+    assert_equal(src, Zstd.decode(Zstd.encode(src, dict: dict), src.bytesize, dict: dict))
   end
 end

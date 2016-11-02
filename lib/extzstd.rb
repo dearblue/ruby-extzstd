@@ -14,32 +14,46 @@ require "stringio"
 module Zstd
   #
   # call-seq:
-  #   encode(src_string, level = nil, dict = nil) -> zstd string
-  #   encode(src_string, encoder_params, dict = nil) -> zstd string
-  #   encode(outport, level = nil, dict = nil) -> zstd encoder
-  #   encode(outport, level = nil, dict = nil) { |encoder| ... } -> yield returned value
-  #   encode(outport, encoder_params, dict = nil) -> zstd encoder
-  #   encode(outport, encoder_params, dict = nil) { |encoder| ... } -> yield returned value
+  #   encode(src_string, level = nil, opts = {}) -> zstd string
+  #   encode(src_string, encode_params, opts = {}) -> zstd string
+  #   encode(outport, level = nil, opts = {}) -> zstd encoder
+  #   encode(outport, level = nil, opts = {}) { |encoder| ... } -> yield returned value
+  #   encode(outport, encode_params, opts = {}) -> zstd encoder
+  #   encode(outport, encode_params, opts = {}) { |encoder| ... } -> yield returned value
   #
-  def self.encode(src, *args, &block)
+  # [src_string (string)]
+  # [outport (io liked object)]
+  # [level = nil (integer or nil)]
+  # [encode_params (instance of Zstd::Parameters)]
+  # [opts dict: nil (string or nil)]
+  def self.encode(src, params = nil, dict: nil, &block)
     if src.kind_of?(String)
-      dest = Aux::EMPTY_BUFFER.dup
-      return Encoder.open(dest, *args) { |e| e.write src; dest }
+      return ContextLess.encode(src, Aux::EMPTY_BUFFER.dup, nil, dict, params)
     end
 
-    Encoder.open(src, *args, &block)
+    Encoder.open(src, params, dict, &block)
   end
 
   #
   # call-seq:
-  #   decode(zstd_string, maxsize = nil, dict = nil) -> string
-  #   decode(zstd_stream, maxsize = nil, dict = nil) -> zstd decoder
-  #   decode(zstd_stream, maxsize = nil, dict = nil) { |decoder| ... } -> yield returned value
+  #   decode(zstd_string, maxsize = nil, dict: nil) -> string
+  #   decode(zstd_stream, dict: nil) -> zstd decoder
+  #   decode(zstd_stream, dict: nil) { |decoder| ... } -> yield returned value
   #
-  def self.decode(src, maxsize = nil, dict = nil, &block)
+  def self.decode(src, *args, dict: nil, &block)
     if src.kind_of?(String)
-      maxsize &&= maxsize.to_i
-      return Decoder.open(src, dict) { |d| return d.read(maxsize) }
+      case args.size
+      when 0
+        return ContextLess.decode(src, Aux::EMPTY_BUFFER.dup, nil, dict)
+      when 1
+        Decoder.open(src, dict) { |d| return d.read(args[0].to_i) }
+      else
+        raise ArgumentError, "wrong argument number (given #{args.size}, expect 1 or 2)"
+      end
+    end
+
+    unless args.empty?
+      raise ArgumentError, "wrong argument number (given #{args.size}, expect 1)"
     end
 
     Decoder.open(src, dict, &block)
@@ -49,7 +63,7 @@ module Zstd
     #
     # call-seq:
     #   open(outport, level = nil, dict = nil) -> zstd encoder
-    #   open(outport, encoder_params, dict = nil) { |encoder| ... } -> yield returned value
+    #   open(outport, encode_params, dict = nil) { |encoder| ... } -> yield returned value
     #
     def self.open(outport, *args)
       e = new(outport, *args)
@@ -66,12 +80,12 @@ module Zstd
     #
     # call-seq:
     #   initialize(outport, level = nil, dict = nil)
-    #   initialize(outport, encoder_params, dict = nil)
+    #   initialize(outport, encode_params, dict = nil)
     #
     # +outport+ need has +.<<+ method.
     #
     def initialize(outport, params = nil, dict = nil)
-      encoder = BufferedEncoder.new(params, dict)
+      encoder = StreamEncoder.new(params, dict)
       super encoder, outport, "".force_encoding(Encoding::BINARY), [true]
     end
 
@@ -83,7 +97,7 @@ module Zstd
 
     def close
       return nil if eof?
-      encoder.end(destbuf, BufferedEncoder.recommended_outsize)
+      encoder.end(destbuf, StreamEncoder::OUTSIZE)
       outport << destbuf
       status[0] = false
       nil
@@ -94,9 +108,9 @@ module Zstd
 
       off = 0
       rest = buf.bytesize
-      outsize = BufferedEncoder.recommended_outsize
+      outsize = StreamEncoder::OUTSIZE
       while off && off < rest
-        off = encoder.continue(buf, off, destbuf, outsize)
+        off = encoder.update(buf, off, destbuf, outsize)
         outport << destbuf
       end
 
@@ -109,14 +123,16 @@ module Zstd
       raise IOError, "closed stream" if eof?
 
       off = 0
-      encoder.flush(destbuf, BufferedEncoder.recommended_outsize)
+      encoder.flush(destbuf, StreamEncoder::OUTSIZE)
       outport << destbuf
 
       self
     end
   end
 
-  class Decoder < Struct.new(:decoder, :inport, :readbuf, :destbuf, :status)
+  class Decoder
+    attr_reader :decoder, :inport, :readbuf, :destbuf, :status, :pos
+
     STATUS_CLOSED = nil
     STATUS_READY = 0
     STATUS_INPORT_EOF = 1
@@ -145,15 +161,19 @@ module Zstd
 
     def initialize(inport, dict = nil)
       raise Error, "require .read method - <%s:0x%08x>" % [inport.class, inport.object_id << 1] unless inport.respond_to?(:read)
-      super(BufferedDecoder.new(dict), inport, StringIO.new(Aux::EMPTY_BUFFER.dup), StringIO.new(Aux::EMPTY_BUFFER.dup), STATUS_READY)
+      @decoder = StreamDecoder.new(dict)
+      @inport = inport
+      @readbuf = StringIO.new(Aux::EMPTY_BUFFER.dup)
+      @destbuf = StringIO.new(Aux::EMPTY_BUFFER.dup)
+      @status = STATUS_READY
+      @pos = 0
     end
 
     def close
-      decoder.reset
       inport.close rescue nil if inport.respond_to?(:close)
-      readbuf.clear
-      #destbuf.clear
-      self.status = STATUS_CLOSED
+      readbuf.truncate 0
+      destbuf.truncate 0
+      @status = STATUS_CLOSED
       nil
     end
 
@@ -165,11 +185,11 @@ module Zstd
 
     def read(size = nil, dest = Aux::EMPTY_BUFFER.dup)
       dest ||= Aux::EMPTY_BUFFER.dup
+      size &&= size.to_i
       Aux.change_binary(dest) do
         #dest.clear
-        dest[0 .. -1] = Aux::EMPTY_BUFFER # keep allocated heap
-
-        return dest if size == 0
+        dest[0 .. -1] = Aux::EMPTY_BUFFER unless dest.empty? # keep allocated heap
+        return dest unless !size || size > 0
 
         d = Aux::EMPTY_BUFFER.dup
         until size && size <= 0
@@ -187,33 +207,45 @@ module Zstd
       if dest.empty?
         nil
       else
+        @pos += dest.bytesize
         dest
       end
     end
 
     private
     def fetch
-      return nil if eof? || status == STATUS_INPORT_EOF
+      return nil if eof?
+
+      destbuf.rewind
+      destbuf.truncate 0
 
       while true
-        if readbuf.eof?
-          readbuf.string[0 .. -1] = Aux::EMPTY_BUFFER
+        if readbuf.eof? && status != STATUS_INPORT_EOF
           readbuf.rewind
-          unless inport.read(BufferedDecoder.recommended_insize, readbuf.string)
-            self.status = STATUS_INPORT_EOF
-            return nil
+          unless inport.read StreamDecoder::INSIZE, readbuf.string
+            @status = STATUS_INPORT_EOF
           end
         end
 
-        off = decoder.continue(readbuf.string, readbuf.pos, destbuf.string, BufferedDecoder.recommended_outsize)
-        readbuf.pos = off if off
-        destbuf.rewind
-        return self if destbuf.size > 0
+        begin
+          off = decoder.update readbuf.string, readbuf.pos, destbuf.string, StreamDecoder::OUTSIZE
+          readbuf.pos = off if off
+          return self if destbuf.size > 0
+          break if readbuf.eof? && status == STATUS_INPORT_EOF
+        rescue Zstd::InitMissingError
+          break if readbuf.eof? && status == STATUS_INPORT_EOF
+          raise
+        end
       end
+
+      # when readbuf.eof? && status == STATUS_INPORT_EOF
+
+      @status = nil
+      nil
     end
   end
 
-  class EncodeParameters
+  class Parameters
     def inspect
       "#<#{self.class} windowlog=#{windowlog}, chainlog=#{chainlog}, " \
         "hashlog=#{hashlog}, searchlog=#{searchlog}, " \
@@ -232,6 +264,8 @@ module Zstd
         q.text "searchlog=#{searchlog},"
         q.breakable " "
         q.text "searchlength=#{searchlength},"
+        q.breakable " "
+        q.text "targetlength=#{targetlength},"
         q.breakable " "
         q.text "strategy=#{strategy}>"
       end

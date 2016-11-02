@@ -2,9 +2,13 @@
 
 require "mkmf"
 
-find_header "zstd.h", "$(srcdir)/../contrib/zstd/common" or abort "can't find ``zstd.h''"
-find_header "zdict.h", "$(srcdir)/../contrib/zstd/dictBuilder" or abort "can't find ``zdict.h''"
-find_header "zstd_legacy.h", "$(srcdir)/../contrib/zstd/legacy" or abort "can't find ``zstd_legacy.h''"
+$INCFLAGS = %w(
+  -I$(srcdir)/../contrib
+  -I$(srcdir)/../contrib/zstd
+  -I$(srcdir)/../contrib/zstd/common
+  -I$(srcdir)/../contrib/zstd/dictBuilder
+  -I$(srcdir)/../contrib/zstd/legacy
+).join(" ") + " #$INCFLAGS"
 
 #dir = File.dirname(__FILE__).gsub(/[\[\{\?\*]/, "[\\0]")
 #filepattern = "{.,../contrib/zstd}/**/*.c"
