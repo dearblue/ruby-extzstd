@@ -7,15 +7,15 @@ This is unofficial ruby bindings for compression library
   * version: 0.1.1
   * software quality: EXPERIMENTAL
   * license: BSD-2-clause License
-  * author: dearblue <mailto:dearblue@users.osdn.me>
-  * report issue to: <https://osdn.jp/projects/rutsubo/ticket/>
+  * author: dearblue <mailto:dearblue@users.noreply.github.com>
+  * report issue to: <https://github.com/dearblue/ruby-extzstd/issues>
   * dependency ruby: ruby-2.1+
   * dependency ruby gems: (none)
   * dependency library: (none)
   * bundled external C library:
-      * zstd-1.1.1 <https://github.com/facebook/zstd/tree/v1.1.1>
+      * zstd-1.1.4 <https://github.com/facebook/zstd/tree/v1.1.4>
 
-        under BSD-3-clause License <https://github.com/facebook/zstd/blob/v1.1.1/LICENSE>
+        under BSD-3-clause License <https://github.com/facebook/zstd/blob/v1.1.4/LICENSE>
 
         by facebook <https://github.com/facebook>
 

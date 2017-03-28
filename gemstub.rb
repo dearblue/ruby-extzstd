@@ -10,15 +10,15 @@ GEMSTUB = Gem::Specification.new do |s|
   s.version = version
   s.summary = "ruby bindings for Zstandard (zstd)"
   s.description = <<EOS
-unoficial ruby bindings for Zstandard (zstd) <https://github.com/Cyan4973/zstd>.
+unoficial ruby bindings for Zstandard (zstd) <https://github.com/facebook/zstd>.
 EOS
-  s.homepage = "https://osdn.jp/projects/rutsubo/"
-  s.license = "2-clause BSD License"
+  s.homepage = "https://github.com/dearblue/ruby-extzstd/"
+  s.license = "BSD-2-Clause"
   s.author = "dearblue"
-  s.email = "dearblue@users.osdn.me"
+  s.email = "dearblue@users.noreply.github.com"
 
   s.required_ruby_version = ">= 2.0"
-  s.add_development_dependency "rake"
+  s.add_development_dependency "rake", ">= 12.0"
 end
 
 LIB << "lib/extzstd/version.rb"
