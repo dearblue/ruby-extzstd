@@ -1,5 +1,5 @@
 #include "extzstd.h"
-#include <zstd/common/mem.h>
+#include <zstd/lib/common/mem.h>
 #include <zstd_errors.h>
 #include <zdict.h>
 

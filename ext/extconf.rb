@@ -4,10 +4,10 @@ require "mkmf"
 
 $INCFLAGS = %w(
   -I$(srcdir)/../contrib
-  -I$(srcdir)/../contrib/zstd
-  -I$(srcdir)/../contrib/zstd/common
-  -I$(srcdir)/../contrib/zstd/dictBuilder
-  -I$(srcdir)/../contrib/zstd/legacy
+  -I$(srcdir)/../contrib/zstd/lib
+  -I$(srcdir)/../contrib/zstd/lib/common
+  -I$(srcdir)/../contrib/zstd/lib/dictBuilder
+  -I$(srcdir)/../contrib/zstd/lib/legacy
 ).join(" ") + " #$INCFLAGS"
 
 #dir = File.dirname(__FILE__).gsub(/[\[\{\?\*]/, "[\\0]")

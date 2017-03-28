@@ -1,1 +1,1 @@
-#include "../contrib/zstd/legacy/zstd_v06.c"
+#include "../contrib/zstd/lib/legacy/zstd_v06.c"
