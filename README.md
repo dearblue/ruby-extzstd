@@ -4,7 +4,7 @@ This is unofficial ruby bindings for compression library
 [Zstd (Zstandard)](https://github.com/facebook/zstd).
 
   * package name: extzstd
-  * version: 0.1
+  * version: 0.1.1
   * software quality: EXPERIMENTAL
   * license: BSD-2-clause License
   * author: dearblue <mailto:dearblue@users.osdn.me>
