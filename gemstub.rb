@@ -35,3 +35,7 @@ end
 end
 
 EXTRA.concat(FileList["contrib/**/*"])
+
+filter = %r(contrib/zstd/(?:build|contrib|doc|examples|lib/dll|programs|tests|zlibWrapper))
+DOC.reject! { |path| path =~ filter }
+EXTRA.reject! { |path| path =~ filter }
