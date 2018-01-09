@@ -3,7 +3,8 @@
 
 #define ZSTD_LEGACY_SUPPORT 1
 #define ZDICT_STATIC_LINKING_ONLY 1
-#define ZSTD_STATIC_LINKING_ONLY 1
+//#define ZSTD_STATIC_LINKING_ONLY 1
+#include <common/zstd_internal.h> /* for MIN() */
 #include <zstd.h>
 #include <stdarg.h>
 #include <ruby.h>
