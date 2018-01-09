@@ -4,20 +4,18 @@ This is unofficial ruby bindings for compression library
 [Zstd (Zstandard)](https://github.com/facebook/zstd).
 
   * package name: extzstd
-  * version: 0.1.1
+  * version: 0.2
   * software quality: EXPERIMENTAL
   * license: BSD-2-clause License
   * author: dearblue <mailto:dearblue@users.noreply.github.com>
   * report issue to: <https://github.com/dearblue/ruby-extzstd/issues>
-  * dependency ruby: ruby-2.1+
+  * dependency ruby: ruby-2.2+
   * dependency ruby gems: (none)
   * dependency library: (none)
   * bundled external C library:
-      * zstd-1.1.4 <https://github.com/facebook/zstd/tree/v1.1.4>
-
-        under BSD-3-clause License <https://github.com/facebook/zstd/blob/v1.1.4/LICENSE>
-
-        by facebook <https://github.com/facebook>
+      * [zstd-1.3.3](https://github.com/facebook/zstd/tree/v1.3.3)
+        under selectable dual licensed ([BSD-3-clause License](https://github.com/facebook/zstd/blob/v1.3.3/LICENSE) and [GNU General Public License, version 2](https://github.com/facebook/zstd/blob/v1.3.3/COPYING))
+        by [facebook](https://github.com/facebook)
 
 "extzstd" is supported decompression with the legacy formats (zstd-0.1 - 0.7).
 
