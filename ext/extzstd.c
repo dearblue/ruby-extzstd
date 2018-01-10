@@ -688,7 +688,7 @@ init_contextless(void)
  * library initializer
  */
 
-void
+RBEXT_API void
 Init_extzstd(void)
 {
     extzstd_mZstd = rb_define_module("Zstd");

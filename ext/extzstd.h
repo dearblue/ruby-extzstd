@@ -184,4 +184,22 @@ aux_const_dig_str_0(VALUE obj, const char *p[], const char **pp)
         rb_ary_new4(ELEMENTOF(v__), v__);   \
     })                                      \
 
+#if defined _WIN32 || defined __CYGWIN__
+#   define RBEXT_IMPORT __declspec(dllimport)
+#   define RBEXT_EXPORT __declspec(dllexport)
+#   define RBEXT_LOCAL
+#elif __GNUC__ >= 4 || __clang__
+#   define RBEXT_IMPORT __attribute__((visibility("default")))
+#   define RBEXT_EXPORT __attribute__((visibility("default")))
+#   define RBEXT_LOCAL  __attribute__((visibility("hidden")))
+#else
+#   define RBEXT_IMPORT
+#   define RBEXT_EXPORT
+#   define RBEXT_LOCAL
+#endif
+
+#ifndef RBEXT_API
+#   define RBEXT_API RBEXT_EXPORT
+#endif
+
 #endif /* EXTZSTD_H */
