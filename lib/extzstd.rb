@@ -59,6 +59,27 @@ module Zstd
     Decoder.open(src, dict, &block)
   end
 
+  StreamEncoder = Encoder
+
+  class Encoder
+    #
+    # call-seq:
+    #   open(outport, level = nil, dict = nil) -> zstd encoder
+    #   open(outport, encode_params, dict = nil) { |encoder| ... } -> yield returned value
+    #
+    def self.open(outport, *args)
+      e = new(outport, *args)
+
+      return e unless block_given?
+
+      begin
+        yield e
+      ensure
+        e.close rescue nil unless e.eof?
+      end
+    end
+  end
+
   class Encoder < Struct.new(:encoder, :outport, :destbuf, :status)
     #
     # call-seq:
@@ -127,6 +148,32 @@ module Zstd
       outport << destbuf
 
       self
+    end
+  end if false
+
+  StreamDecoder = Decoder
+
+  class Decoder
+    #
+    # call-seq:
+    #   open(inport, dict = nil) -> decoder
+    #   open(inport, dict = nil) { |decoder| ... } -> yield returned value
+    #
+    # [inport]
+    #   String instance or +read+ method haved Object.
+    #
+    def self.open(inport, dict = nil)
+      inport = StringIO.new(inport) if inport.kind_of?(String)
+
+      dec = new(inport, dict)
+
+      return dec unless block_given?
+
+      begin
+        yield(dec)
+      ensure
+        dec.close rescue nil
+      end
     end
   end
 
@@ -243,7 +290,7 @@ module Zstd
       @status = nil
       nil
     end
-  end
+  end if false
 
   class Parameters
     def inspect

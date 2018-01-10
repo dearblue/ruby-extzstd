@@ -29,24 +29,6 @@ RDOCFAKE(extzstd_cParams = rb_define_class_under(extzstd_mZstd, "Parameters", rb
 
 extern VALUE extzstd_mExceptions;
 extern VALUE extzstd_eError;
-extern VALUE extzstd_eGenericError;
-extern VALUE extzstd_ePrefixUnknownError;
-extern VALUE extzstd_eFrameParameterUnsupportedError;
-extern VALUE extzstd_eFrameParameterUnsupportedBy32bitsError;
-extern VALUE extzstd_eCompressionParameterUnsupportedError;
-extern VALUE extzstd_eInitMissingError;
-extern VALUE extzstd_eMemoryAllocationError;
-extern VALUE extzstd_eStageWrongError;
-extern VALUE extzstd_eDstSizeTooSmallError;
-extern VALUE extzstd_eSrcSizeWrongError;
-extern VALUE extzstd_eCorruptionDetectedError;
-extern VALUE extzstd_eChecksumWrongError;
-extern VALUE extzstd_eTableLogTooLargeError;
-extern VALUE extzstd_eMaxSymbolValueTooLargeError;
-extern VALUE extzstd_eMaxSymbolValueTooSmallError;
-extern VALUE extzstd_eDictionaryCorruptedError;
-extern VALUE extzstd_eDictionaryWrongError;
-
 
 extern void init_extzstd_stream(void);
 extern void extzstd_init_buffered(void);
@@ -54,7 +36,7 @@ extern void extzstd_init_stream(void);
 extern void extzstd_error(ssize_t errcode);
 extern void extzstd_check_error(ssize_t errcode);
 extern VALUE extzstd_make_error(ssize_t errcode);
-extern VALUE extzstd_make_errorf(VALUE exc, const char *fmt, ...);
+extern VALUE extzstd_make_errorf(ssize_t errcode, const char *fmt, ...);
 
 extern ZSTD_parameters *extzstd_getparams(VALUE v);
 extern int extzstd_params_p(VALUE v);
@@ -172,17 +154,30 @@ aux_const_dig_str_0(VALUE obj, const char *p[], const char **pp)
     return obj;
 }
 
-#define aux_const_dig_str(OBJ, ...)                          \
-    ({                                                       \
-        const char *names__[] = { __VA_ARGS__ };             \
-        aux_const_dig_str_0((OBJ), names__, ENDOF(names__)); \
-    })                                                       \
+#define aux_const_dig_str(OBJ, ...)                         \
+        aux_const_dig_str_0((OBJ),                          \
+                ((const char *[]){ __VA_ARGS__ }),          \
+                ENDOF(((const char *[]){ __VA_ARGS__ })))   \
 
-#define AUX_TUPLE(...)                      \
-    ({                                      \
-        VALUE v__[] = { __VA_ARGS__ };      \
-        rb_ary_new4(ELEMENTOF(v__), v__);   \
-    })                                      \
+#define AUX_TUPLE(...)                                  \
+    rb_ary_new4(ELEMENTOF(((VALUE[]) { __VA_ARGS__ })), \
+            ((VALUE[]) { __VA_ARGS__ }))                \
+
+#define AUX_FUNCALL(RECV, MID, ...)                         \
+    rb_funcall2((RECV), (MID),                              \
+            ELEMENTOF(((const VALUE[]){ __VA_ARGS__ })),    \
+            ((const VALUE[]){ __VA_ARGS__ }))               \
+
+#define AUX_TRY_WITH_GC(cond, mesg) \
+    do {                            \
+        if (!(cond)) {              \
+            rb_gc();                \
+            if (!(cond)) {          \
+                errno = ENOMEM;     \
+                rb_sys_fail(mesg);  \
+            }                       \
+        }                           \
+    } while (0)                     \
 
 #if defined _WIN32 || defined __CYGWIN__
 #   define RBEXT_IMPORT __declspec(dllimport)
@@ -201,5 +196,34 @@ aux_const_dig_str_0(VALUE obj, const char *p[], const char **pp)
 #ifndef RBEXT_API
 #   define RBEXT_API RBEXT_EXPORT
 #endif
+
+
+static void
+aux_string_pointer(VALUE str, const char **ptr, size_t *size)
+{
+    rb_check_type(str, RUBY_T_STRING);
+    RSTRING_GETMEM(str, *ptr, *size);
+}
+
+static void
+aux_string_pointer_with_nil(VALUE str, const char **ptr, size_t *size)
+{
+    if (NIL_P(str)) {
+        *ptr = NULL;
+        *size = 0;
+    } else {
+        aux_string_pointer(str, ptr, size);
+    }
+}
+
+static void
+aux_string_expand_pointer(VALUE str, char **ptr, size_t size)
+{
+    rb_check_type(str, RUBY_T_STRING);
+    rb_str_modify(str);
+    rb_str_set_len(str, 0);
+    rb_str_modify_expand(str, size);
+    *ptr = RSTRING_PTR(str);
+}
 
 #endif /* EXTZSTD_H */

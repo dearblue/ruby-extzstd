@@ -3,35 +3,10 @@
 #include <zstd_errors.h>
 #include <zdict.h>
 
-static void
-aux_string_pointer(VALUE str, const char **ptr, size_t *size)
-{
-    rb_check_type(str, RUBY_T_STRING);
-    RSTRING_GETMEM(str, *ptr, *size);
-}
-
-static void
-aux_string_pointer_with_nil(VALUE str, const char **ptr, size_t *size)
-{
-    if (NIL_P(str)) {
-        *ptr = NULL;
-        *size = 0;
-    } else {
-        aux_string_pointer(str, ptr, size);
-    }
-}
-
-static void
-aux_string_expand_pointer(VALUE str, char **ptr, size_t size)
-{
-    rb_check_type(str, RUBY_T_STRING);
-    rb_str_modify(str);
-    rb_str_set_len(str, 0);
-    rb_str_modify_expand(str, size);
-    *ptr = RSTRING_PTR(str);
-}
-
 VALUE extzstd_mZstd;
+
+static ID id_initialize;
+static ID id_error_code;
 
 /*
  * constant Zstd::LIBRARY_VERSION
@@ -83,25 +58,6 @@ init_libver(void)
 VALUE extzstd_mExceptions;
 
 VALUE extzstd_eError;
-VALUE extzstd_eError;
-VALUE extzstd_eGenericError;
-VALUE extzstd_ePrefixUnknownError;
-VALUE extzstd_eFrameParameterUnsupportedError;
-VALUE extzstd_eFrameParameterUnsupportedBy32bitsError;
-VALUE extzstd_eCompressionParameterUnsupportedError;
-VALUE extzstd_eInitMissingError;
-VALUE extzstd_eMemoryAllocationError;
-VALUE extzstd_eStageWrongError;
-VALUE extzstd_eDstSizeTooSmallError;
-VALUE extzstd_eSrcSizeWrongError;
-VALUE extzstd_eCorruptionDetectedError;
-VALUE extzstd_eChecksumWrongError;
-VALUE extzstd_eTableLogTooLargeError;
-VALUE extzstd_eMaxSymbolValueTooLargeError;
-VALUE extzstd_eMaxSymbolValueTooSmallError;
-VALUE extzstd_eDictionaryCorruptedError;
-VALUE extzstd_eDictionaryWrongError;
-
 
 void
 extzstd_check_error(ssize_t errcode)
@@ -118,16 +74,18 @@ extzstd_error(ssize_t errcode)
 }
 
 VALUE
-extzstd_make_errorf(VALUE exc, const char *fmt, ...)
+extzstd_make_errorf(ssize_t errcode, const char *fmt, ...)
 {
+    VALUE e;
+
     if (fmt && strlen(fmt) > 0) {
         va_list va;
         va_start(va, fmt);
         VALUE mesg = rb_vsprintf(fmt, va);
         va_end(va);
-        return rb_exc_new3(exc, mesg);
+        return AUX_FUNCALL(extzstd_eError, id_initialize, SSIZET2NUM(errcode), mesg);
     } else {
-        return rb_exc_new2(exc, "");
+        return AUX_FUNCALL(extzstd_eError, id_initialize, SSIZET2NUM(errcode));
     }
 }
 
@@ -136,33 +94,34 @@ extzstd_make_error(ssize_t errcode)
 {
     if (!ZSTD_isError(errcode)) { return Qnil; }
 
-#define CASE_ERROR(zstderr, extzstderr, ...)                            \
-    case zstderr: return extzstd_make_errorf(extzstderr, __VA_ARGS__);  \
+    return extzstd_make_errorf(ZSTD_getErrorCode(errcode), NULL);
+}
 
-    switch (-errcode) {
-    CASE_ERROR(ZSTD_error_GENERIC, extzstd_eGenericError, NULL);
-    CASE_ERROR(ZSTD_error_prefix_unknown, extzstd_ePrefixUnknownError, NULL);
-    CASE_ERROR(ZSTD_error_frameParameter_unsupported, extzstd_eFrameParameterUnsupportedError, NULL);
-    CASE_ERROR(ZSTD_error_frameParameter_unsupportedBy32bits, extzstd_eFrameParameterUnsupportedBy32bitsError, NULL);
-    CASE_ERROR(ZSTD_error_compressionParameter_unsupported, extzstd_eCompressionParameterUnsupportedError, NULL);
-    CASE_ERROR(ZSTD_error_init_missing, extzstd_eInitMissingError, NULL);
-    CASE_ERROR(ZSTD_error_memory_allocation, extzstd_eMemoryAllocationError, NULL);
-    CASE_ERROR(ZSTD_error_stage_wrong, extzstd_eStageWrongError, NULL);
-    CASE_ERROR(ZSTD_error_dstSize_tooSmall, extzstd_eDstSizeTooSmallError, NULL);
-    CASE_ERROR(ZSTD_error_srcSize_wrong, extzstd_eSrcSizeWrongError, NULL);
-    CASE_ERROR(ZSTD_error_corruption_detected, extzstd_eCorruptionDetectedError, NULL);
-    CASE_ERROR(ZSTD_error_checksum_wrong, extzstd_eChecksumWrongError, NULL);
-    CASE_ERROR(ZSTD_error_tableLog_tooLarge, extzstd_eTableLogTooLargeError, NULL);
-    CASE_ERROR(ZSTD_error_maxSymbolValue_tooLarge, extzstd_eMaxSymbolValueTooLargeError, NULL);
-    CASE_ERROR(ZSTD_error_maxSymbolValue_tooSmall, extzstd_eMaxSymbolValueTooSmallError, NULL);
-    CASE_ERROR(ZSTD_error_dictionary_corrupted, extzstd_eDictionaryCorruptedError, NULL);
-    CASE_ERROR(ZSTD_error_dictionary_wrong, extzstd_eDictionaryWrongError, NULL);
-    default:
-        return extzstd_make_errorf(extzstd_eError,
-                "unknown zstd error code (%d)", errcode);
-    }
+static VALUE
+err_initialize(int argc, VALUE argv[], VALUE err)
+{
+    VALUE errcode;
 
-#undef CASE_ERROR
+    rb_scan_args(argc, argv, "1*", &errcode, NULL);
+    rb_call_super(argc - 1, argv + 1);
+    rb_ivar_set(err, id_error_code, errcode);
+
+    return err;
+}
+
+static VALUE
+err_errcode(VALUE err)
+{
+    return rb_ivar_get(err, id_error_code);
+}
+
+static VALUE
+err_to_s(VALUE err)
+{
+    ZSTD_ErrorCode code = (ZSTD_ErrorCode)NUM2SSIZET(rb_ivar_get(err, id_error_code));
+    VALUE mesg = rb_call_super(0, NULL);
+    VALUE mesg2 = rb_sprintf(" - %s (errcode: %d)", ZSTD_getErrorString(code), (int)code);
+    return rb_str_plus(mesg, mesg2);
 }
 
 static void
@@ -172,57 +131,10 @@ init_error(void)
 
     extzstd_eError = rb_define_class_under(extzstd_mZstd, "Error", rb_eRuntimeError);
     rb_include_module(extzstd_eError, extzstd_mExceptions);
-
-    extzstd_eGenericError = rb_define_class_under(extzstd_mZstd, "GenericError", rb_eRuntimeError);
-    rb_include_module(extzstd_eGenericError, extzstd_mExceptions);
-
-    extzstd_ePrefixUnknownError = rb_define_class_under(extzstd_mZstd, "PrefixUnknownError", rb_eArgError);
-    rb_include_module(extzstd_ePrefixUnknownError, extzstd_mExceptions);
-
-    extzstd_eFrameParameterUnsupportedError = rb_define_class_under(extzstd_mZstd, "FrameParameterUnsupportedError", rb_eRuntimeError);
-    rb_include_module(extzstd_eFrameParameterUnsupportedError, extzstd_mExceptions);
-
-    extzstd_eFrameParameterUnsupportedBy32bitsError = rb_define_class_under(extzstd_mZstd, "FrameParameterUnsupportedBy32bitsImplementationError", rb_eRuntimeError);
-    rb_include_module(extzstd_eFrameParameterUnsupportedBy32bitsError, extzstd_mExceptions);
-
-    extzstd_eCompressionParameterUnsupportedError = rb_define_class_under(extzstd_mZstd, "CompressionParameterUnsupportedError", rb_eRuntimeError);
-    rb_include_module(extzstd_eCompressionParameterUnsupportedError, extzstd_mExceptions);
-
-    extzstd_eInitMissingError = rb_define_class_under(extzstd_mZstd, "InitMissingError", rb_eRuntimeError);
-    rb_include_module(extzstd_eInitMissingError, extzstd_mExceptions);
-
-    extzstd_eMemoryAllocationError = rb_define_class_under(extzstd_mZstd, "MemoryAllocationError", aux_const_dig_str(rb_cObject, "Errno", "ENOMEM"));
-    rb_include_module(extzstd_eMemoryAllocationError, extzstd_mExceptions);
-
-    extzstd_eStageWrongError = rb_define_class_under(extzstd_mZstd, "StageWrongError", rb_eRuntimeError);
-    rb_include_module(extzstd_eStageWrongError, extzstd_mExceptions);
-
-    extzstd_eDstSizeTooSmallError = rb_define_class_under(extzstd_mZstd, "DstSizeTooSmallError", rb_eArgError);
-    rb_include_module(extzstd_eDstSizeTooSmallError, extzstd_mExceptions);
-
-    extzstd_eSrcSizeWrongError = rb_define_class_under(extzstd_mZstd, "SrcSizeWrongError", rb_eArgError);
-    rb_include_module(extzstd_eSrcSizeWrongError, extzstd_mExceptions);
-
-    extzstd_eCorruptionDetectedError = rb_define_class_under(extzstd_mZstd, "CorruptionDetectedError", rb_eRuntimeError);
-    rb_include_module(extzstd_eCorruptionDetectedError, extzstd_mExceptions);
-
-    extzstd_eChecksumWrongError = rb_define_class_under(extzstd_mZstd, "ChecksumWrongError", rb_eRuntimeError);
-    rb_include_module(extzstd_eChecksumWrongError, extzstd_mExceptions);
-
-    extzstd_eTableLogTooLargeError = rb_define_class_under(extzstd_mZstd, "TableLogTooLargeError", rb_eArgError);
-    rb_include_module(extzstd_eTableLogTooLargeError, extzstd_mExceptions);
-
-    extzstd_eMaxSymbolValueTooLargeError = rb_define_class_under(extzstd_mZstd, "MaxSymbolValueTooLargeError", rb_eArgError);
-    rb_include_module(extzstd_eMaxSymbolValueTooLargeError, extzstd_mExceptions);
-
-    extzstd_eMaxSymbolValueTooSmallError = rb_define_class_under(extzstd_mZstd, "MaxSymbolValueTooSmallError", rb_eArgError);
-    rb_include_module(extzstd_eMaxSymbolValueTooSmallError, extzstd_mExceptions);
-
-    extzstd_eDictionaryCorruptedError = rb_define_class_under(extzstd_mZstd, "DictionaryCorruptedError", rb_eRuntimeError);
-    rb_include_module(extzstd_eDictionaryCorruptedError, extzstd_mExceptions);
-
-    extzstd_eDictionaryWrongError = rb_define_class_under(extzstd_mZstd, "DictionaryWrongError", rb_eRuntimeError);
-    rb_include_module(extzstd_eDictionaryWrongError, extzstd_mExceptions);
+    rb_define_method(extzstd_eError, "initialize", err_initialize, -1);
+    rb_define_method(extzstd_eError, "error_code", err_errcode, 0);
+    rb_define_method(extzstd_eError, "to_s", err_to_s, 0);
+    rb_define_alias(extzstd_eError, "errcode", "error_code");
 }
 
 /*
@@ -245,6 +157,7 @@ init_constants(void)
     rb_define_const(mConstants, "ZSTD_LAZY2", INT2NUM(ZSTD_lazy2));
     rb_define_const(mConstants, "ZSTD_BTLAZY2", INT2NUM(ZSTD_btlazy2));
     rb_define_const(mConstants, "ZSTD_BTOPT", INT2NUM(ZSTD_btopt));
+    rb_define_const(mConstants, "ZSTD_BTULTRA", INT2NUM(ZSTD_btultra));
     rb_define_const(mConstants, "ZSTD_WINDOWLOG_MAX", INT2NUM(ZSTD_WINDOWLOG_MAX));
     rb_define_const(mConstants, "ZSTD_WINDOWLOG_MIN", INT2NUM(ZSTD_WINDOWLOG_MIN));
     rb_define_const(mConstants, "ZSTD_HASHLOG_MAX", INT2NUM(ZSTD_HASHLOG_MAX));
@@ -266,6 +179,7 @@ init_constants(void)
     rb_define_const(mConstants, "LAZY2", INT2NUM(ZSTD_lazy2));
     rb_define_const(mConstants, "BTLAZY2", INT2NUM(ZSTD_btlazy2));
     rb_define_const(mConstants, "BTOPT", INT2NUM(ZSTD_btopt));
+    rb_define_const(mConstants, "BTULTRA", INT2NUM(ZSTD_btultra));
     rb_define_const(mConstants, "WINDOWLOG_MAX", INT2NUM(ZSTD_WINDOWLOG_MAX));
     rb_define_const(mConstants, "WINDOWLOG_MIN", INT2NUM(ZSTD_WINDOWLOG_MIN));
     rb_define_const(mConstants, "HASHLOG_MAX", INT2NUM(ZSTD_HASHLOG_MAX));
@@ -691,6 +605,9 @@ init_contextless(void)
 RBEXT_API void
 Init_extzstd(void)
 {
+    id_initialize = rb_intern("initialize");
+    id_error_code = rb_intern("error_code");
+
     extzstd_mZstd = rb_define_module("Zstd");
 
     init_libver();
