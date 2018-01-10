@@ -17,8 +17,8 @@ $INCFLAGS = %w(
 #$srcs = files
 #$VPATH.push "$(srcdir)/../contrib/zstd", "$(srcdir)/../contrib/zstd/legacy"
 
-if RbConfig::CONFIG["arch"] =~ /mingw/
-  $LDFLAGS << " -static-libgcc"
+if RbConfig::CONFIG["arch"] =~ /mingw/i
+  $LDFLAGS << " -static-libgcc" if try_ldflags("-static-libgcc")
 end
 
 create_makefile File.join(RUBY_VERSION.slice(/\d+\.\d+/), "extzstd")
