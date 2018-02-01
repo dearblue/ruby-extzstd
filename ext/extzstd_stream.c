@@ -449,6 +449,51 @@ dec_read_decode(VALUE o, struct decoder *p, char *buf, ssize_t size)
     return output.pos;
 }
 
+static void
+dec_read_args(int argc, VALUE argv[], VALUE self, VALUE *buf, ssize_t *size)
+{
+    switch (argc) {
+    case 0:
+        *size = -1;
+        *buf = rb_str_buf_new(EXT_READ_GROWUP_SIZE);
+        break;
+    case 1:
+    case 2:
+        {
+            if (NIL_P(argv[0])) {
+                *size = -1;
+
+                if (argc == 1) {
+                    *buf = rb_str_buf_new(EXT_READ_GROWUP_SIZE);
+                } else {
+                    rb_check_type(argv[1], RUBY_T_STRING);
+                    *buf = aux_str_modify_expand(argv[1], EXT_READ_GROWUP_SIZE);
+                    rb_str_set_len(*buf, 0);
+                }
+            } else {
+                *size = NUM2SIZET(argv[0]);
+
+                if (*size < 0) {
+                    rb_raise(rb_eArgError,
+                             "``size'' is negative or too large (%"PRIdPTR")",
+                             (intptr_t)*size);
+                }
+
+                if (argc == 1) {
+                    *buf = rb_str_buf_new(*size);
+                } else {
+                    rb_check_type(argv[1], RUBY_T_STRING);
+                    *buf = aux_str_modify_expand(argv[1], *size);
+                    rb_str_set_len(*buf, 0);
+                }
+            }
+        }
+        break;
+    default:
+        rb_error_arity(argc, 0, 2);
+    }
+}
+
 /*
  * call-seq:
  *  read -> read_data
@@ -463,46 +508,7 @@ dec_read(int argc, VALUE argv[], VALUE self)
 
     ssize_t size;
     VALUE buf;
-    switch (argc) {
-    case 0:
-        size = -1;
-        buf = rb_str_buf_new(EXT_READ_GROWUP_SIZE);
-        break;
-    case 1:
-    case 2:
-        {
-            if (NIL_P(argv[0])) {
-                size = -1;
-
-                if (argc == 1) {
-                    buf = rb_str_buf_new(EXT_READ_GROWUP_SIZE);
-                } else {
-                    rb_check_type(argv[1], RUBY_T_STRING);
-                    buf = aux_str_modify_expand(argv[1], EXT_READ_GROWUP_SIZE);
-                    rb_str_set_len(buf, 0);
-                }
-            } else {
-                size = NUM2SIZET(argv[0]);
-
-                if (size < 0) {
-                    rb_raise(rb_eArgError,
-                             "``size'' is negative or too large (%"PRIdPTR")",
-                             (intptr_t)size);
-                }
-
-                if (argc == 1) {
-                    buf = rb_str_buf_new(size);
-                } else {
-                    rb_check_type(argv[1], RUBY_T_STRING);
-                    buf = aux_str_modify_expand(argv[1], size);
-                    rb_str_set_len(buf, 0);
-                }
-            }
-        }
-        break;
-    default:
-        rb_error_arity(argc, 0, 2);
-    }
+    dec_read_args(argc, argv, self, &buf, &size);
 
     struct decoder *p = decoder_context(self);
 
