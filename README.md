@@ -19,34 +19,26 @@ This is unofficial ruby bindings for the data compression library
 
 "extzstd" is supported decompression with the legacy formats (zstd-0.1 - 0.7).
 
+  * [HISTORY (in Japanese)](HISTORY.ja.md)
+
 
 ## Quick API Reference
 
-  * encoder (compression)
+  * stream encoder (compression)
       * ``Zstd.encode(buf, params = nil, dict: nil) -> encoded string``
       * ``Zstd.encode(outport, params = nil, dict: nil) -> an instance of Zstd::Encoder``
       * ``Zstd.encode(outport, params = nil, dict: nil) { |encoder| ... } -> block returned value``
       * ``Zstd::Encoder#write(buf) -> this instance``
       * ``Zstd::Encoder#close -> nil``
 
-  * decoder (decompression)
+  * stream decoder (decompression)
       * ``Zstd.decode(zstd_buf, dict: nil) -> decoded string``
       * ``Zstd.decode(inport, dict: nil) -> an intance of Zstd::Decoder``
       * ``Zstd.decode(inport, dict: nil) { |decoder| ... } -> block returned value``
       * ``Zstd::Decoder#read(size = nil, buf = nil) -> buf``
       * ``Zstd::Decoder#close -> nil``
 
-  * stream encoder
-      * ``Zstd::StreamEncoder.new(params, dict)`` (``ZSTD_createCStream``, ``ZSTD_initCStream_advanced``)
-      * ``Zstd::StreamEncoder#update(src, srcoff, dest, maxdest) -> integer as new src offset`` (``ZSTD_compressStream``)
-      * ``Zstd::StreamEncoder#flush(dest, maxdest) -> dest`` (``ZSTD_flushStream``)
-      * ``Zstd::StreamEncoder#end(dest, maxdest) -> dest`` (``ZSTD_endStream``)
-
-  * stream decoder
-      * ``Zstd::StreamDecoder.new(dict)`` (``ZSTD_createDStream``, ``ZSTD_initDStream_usingDict``)
-      * ``Zstd::StreamDecoder#update(src, srcoff, dest, maxdest) -> integer as new src offset`` (``ZSTD_decompressStream``)
-
-  * instant (context less) encoder/decoder
+  * context less encoder/decoder (***DEPRECATED***)
       * ``Zstd::ContextLess.encode(src, dest, maxdest, predict, params) -> dest`` (``ZSTD_compress_usingDict``, ``ZSTD_compress_advanced``)
       * ``Zstd::ContextLess.decode(src, dest, maxdest, predict) -> dest`` (``ZSTD_decompress_usingDict``)
 
