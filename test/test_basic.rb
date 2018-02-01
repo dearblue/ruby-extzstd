@@ -32,7 +32,15 @@ class TestZstd < Test::Unit::TestCase
     d.pos = 0
     size_b = 0
     md5b = Digest::MD5.new
-    Zstd.decode(d) { |z| buf = ""; while z.read(654321, buf); size_b += buf.bytesize; md5b.update buf; end }
+    partial_list = [262144, 1, 262144, 262142, 524288, 524280, 99, 999, 9999, 99999, 999999, 9999999, nil]
+    Zstd.decode(d) do |z|
+      buf = ""
+      while z.read(s = partial_list.shift, buf)
+        assert_equal s, buf.bytesize if s
+        size_b += buf.bytesize
+        md5b.update buf
+      end
+    end
     assert_equal size_a, size_b
     assert_equal(md5a.hexdigest, md5b.hexdigest)
   end
