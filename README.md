@@ -14,7 +14,7 @@ This is unofficial ruby bindings for the data compression library
   * dependency library: (none)
   * bundled external C library:
       * [zstd-1.3.3](https://github.com/facebook/zstd)
-        under selectable dual licensed ([BSD-3-clause License](contrib/zstd/LICENSE) and [GNU General Public License, version 2](contrib/zstd/COPYING))
+        under selectable dual licensed ([BSD-3-clause License](https://github.com/facebook/zstd/v1.3.3/blob/zstd/LICENSE) and [GNU General Public License, version 2](https://github.com/facebook/zstd/v1.3.3/blob/zstd/COPYING))
         by [facebook](https://github.com/facebook)
 
 "extzstd" is supported decompression with the legacy formats (zstd-0.1 - 0.7).
