@@ -1,20 +1,20 @@
 # extzstd - ruby bindings for Zstd (Zstandard)
 
-This is unofficial ruby bindings for compression library
+This is unofficial ruby bindings for the data compression library
 [Zstd (Zstandard)](https://github.com/facebook/zstd).
 
   * package name: extzstd
   * version: 0.2
-  * software quality: EXPERIMENTAL
-  * license: BSD-2-clause License
+  * product quality: TECHNICAL PREVIEW, UNSTABLE
+  * license: [BSD-2-clause License](LICENSE)
   * author: dearblue <mailto:dearblue@users.noreply.github.com>
-  * report issue to: <https://github.com/dearblue/ruby-extzstd/issues>
-  * dependency ruby: ruby-2.2+
+  * project page: <https://github.com/dearblue/ruby-extzstd>
+  * support ruby: ruby-2.2+
   * dependency ruby gems: (none)
   * dependency library: (none)
   * bundled external C library:
-      * [zstd-1.3.3](https://github.com/facebook/zstd/tree/v1.3.3)
-        under selectable dual licensed ([BSD-3-clause License](https://github.com/facebook/zstd/blob/v1.3.3/LICENSE) and [GNU General Public License, version 2](https://github.com/facebook/zstd/blob/v1.3.3/COPYING))
+      * [zstd-1.3.3](https://github.com/facebook/zstd)
+        under selectable dual licensed ([BSD-3-clause License](contrib/zstd/LICENSE) and [GNU General Public License, version 2](contrib/zstd/COPYING))
         by [facebook](https://github.com/facebook)
 
 "extzstd" is supported decompression with the legacy formats (zstd-0.1 - 0.7).
@@ -60,7 +60,7 @@ This is unofficial ruby bindings for compression library
 
 ### basic usage (simply encode/decode)
 
-``` ruby:ruby
+``` ruby
 # First, load library
 require "extzstd"
 
@@ -81,7 +81,7 @@ p source == decdata # => true
 
 ### Streaming compression (with block)
 
-``` ruby:ruby
+``` ruby
 outport = StringIO.new("")
 Zstd.encode(outport) do |encoder|
   encoder.write "abcdefg\n"
@@ -93,7 +93,7 @@ end
 
 ### Streaming compression (without block and write to file)
 
-``` ruby:ruby
+``` ruby
 file = File.open("sample.zst", "wb")
 encoder = Zstd.encode(file)
 
@@ -108,7 +108,7 @@ file.close
 
 ### Streaming decompression (with block and read from file)
 
-``` ruby:ruby
+``` ruby
 File.open("sample.zst", "rb") do |file|
   Zstd.decode(file) do |decoder|
     p decoder.read(8)  # => "abcdefg\n"
