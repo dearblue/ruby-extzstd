@@ -44,12 +44,14 @@ module Zstd
     if src.kind_of?(String)
       case args.size
       when 0
-        return ContextLess.decode(src, Aux::EMPTY_BUFFER.dup, nil, dict)
+        size = nil
       when 1
-        Decoder.open(src, dict) { |d| return d.read(args[0].to_i) }
+        size = args[0].to_i
       else
         raise ArgumentError, "wrong argument number (given #{args.size}, expect 1 or 2)"
       end
+
+      Decoder.open(src, dict) { |d| return d.read(size) }
     end
 
     unless args.empty?
