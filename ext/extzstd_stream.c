@@ -166,7 +166,7 @@ enc_write(VALUE self, VALUE src)
      */
 
     struct encoder *p = encoder_context(self);
-    rb_check_type(src, RUBY_T_STRING);
+    src = rb_String(src);
     ZSTD_inBuffer input = { RSTRING_PTR(src), RSTRING_LEN(src), 0 };
 
     while (input.pos < input.size) {
