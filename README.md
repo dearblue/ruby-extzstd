@@ -3,20 +3,6 @@
 This is unofficial ruby bindings for the data compression library
 [Zstd (Zstandard)](https://github.com/facebook/zstd).
 
-  * package name: extzstd
-  * version: 0.2
-  * product quality: TECHNICAL PREVIEW, UNSTABLE
-  * license: [BSD-2-clause License](LICENSE)
-  * author: dearblue <mailto:dearblue@users.noreply.github.com>
-  * project page: <https://github.com/dearblue/ruby-extzstd>
-  * support ruby: ruby-2.2+
-  * dependency ruby gems: (none)
-  * dependency library: (none)
-  * bundled external C library:
-      * [zstd-1.3.3](https://github.com/facebook/zstd)
-        under selectable dual licensed ([BSD-3-clause License](https://github.com/facebook/zstd/blob/v1.3.3/LICENSE) and [GNU General Public License, version 2](https://github.com/facebook/zstd/blob/v1.3.3/COPYING))
-        by [facebook](https://github.com/facebook)
-
 "extzstd" is supported decompression with the legacy formats (zstd-0.1 - 0.7).
 
   * [HISTORY (in Japanese)](HISTORY.ja.md)
@@ -85,3 +71,20 @@ File.open("sample.zst", "rb") do |file|
   end
 end
 ```
+
+
+## Specification
+
+  * package name: extzstd
+  * version: 0.3
+  * product quality: TECHNICAL PREVIEW, UNSTABLE
+  * license: [BSD-2-clause License](LICENSE)
+  * author: dearblue <mailto:dearblue@users.noreply.github.com>
+  * project page: <https://github.com/dearblue/ruby-extzstd>
+  * support ruby: ruby-2.3+
+  * dependency ruby gems: (none)
+  * dependency library: (none)
+  * bundled external C library (git submodules):
+      * [zstd-1.3.4](https://github.com/facebook/zstd)
+        under selectable dual licensed ([BSD-3-clause License](https://github.com/facebook/zstd/blob/v1.3.4/LICENSE) and [GNU General Public License, version 2](https://github.com/facebook/zstd/blob/v1.3.4/COPYING))
+        by [facebook](https://github.com/facebook)
