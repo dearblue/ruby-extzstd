@@ -554,6 +554,13 @@ dec_eof(VALUE self)
 }
 
 static VALUE
+dec_close(VALUE self)
+{
+    decoder_context(self)->reached_eof = 1;
+    return Qnil;
+}
+
+static VALUE
 dec_reset(VALUE self)
 {
     /*
@@ -576,6 +583,13 @@ dec_sizeof(VALUE self)
     return SIZET2NUM(s);
 }
 
+static VALUE
+dec_pos(VALUE self)
+{
+    decoder_context(self); /* check only */
+    return INT2FIX(0);
+}
+
 static void
 init_decoder(void)
 {
@@ -587,8 +601,10 @@ init_decoder(void)
     rb_define_method(cStreamDecoder, "read", dec_read, -1);
     rb_define_method(cStreamDecoder, "eof", dec_eof, 0);
     rb_define_alias(cStreamDecoder, "eof?", "eof");
+    rb_define_method(cStreamDecoder, "close", dec_close, 0);
     rb_define_method(cStreamDecoder, "reset", dec_reset, 0);
     rb_define_method(cStreamDecoder, "sizeof", dec_sizeof, 0);
+    rb_define_method(cStreamDecoder, "pos", dec_pos, 0);
 }
 
 /*
