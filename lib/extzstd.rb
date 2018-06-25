@@ -149,4 +149,24 @@ module Zstd
   module Aux
     EMPTY_BUFFER = "".force_encoding(Encoding::BINARY).freeze
   end
+
+  refine String do
+    def zstd(*args)
+      Zstd::Encoder.encode self, *args
+    end
+
+    def unzstd(*args)
+      Zstd::Decoder.decode self, *args
+    end
+  end
+
+  refine Object do
+    def zstd(*args, &block)
+      Zstd::Encoder.open self, *args, &block
+    end
+
+    def unzstd(*args, &block)
+      Zstd::Decoder.open self, *args, &block
+    end
+  end
 end
