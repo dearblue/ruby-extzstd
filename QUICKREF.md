@@ -22,3 +22,12 @@
       * ``Zstd::Dictionary.train_from_buffer(buf, dict_capacity) -> dictionary'ed string`` (``ZDICT_trainFromBuffer``)
       * ``Zstd::Dictionary.add_entropy_tables_from_buffer(dict, dict_capacity, sample) -> dict`` (``ZDICT_addEntropyTablesFromBuffer``)
       * ``Zstd::Dictionary.getid(dict) -> dict id as integer`` (``ZDICT_getDictID``)
+
+  * refinements
+      * `using Zstd`
+          * `string#zstd(*args) -> encoded string` (same as `Zstd.encode(string, *args)`)
+          * `string#unzstd(*args) -> decoded string` (same as `Zstd.decode(string, *args)`)
+          * `object#zstd(*args) -> an instance of Zstd::Encoder` (same as `Zstd.encode(object, *args)`)
+          * `object#unzstd(*args) -> an intance of Zstd::Decoder` (same as `Zstd.decode(object, *args)`)
+          * `object#zstd(*args) { |encoder| ... } -> block returned value` (same as `Zstd.encode(object, *args) { ... }`)
+          * `object#unzstd(*args) { |decoder| ... } -> block returned value` (same as `Zstd.decode(object, *args) { ... }`)
