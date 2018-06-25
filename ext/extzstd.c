@@ -281,6 +281,9 @@ params_init(int argc, VALUE argv[], VALUE v)
         SETUP_PARAM(p->cParams.searchLength, opts, "searchlength", NUM2UINT);
         SETUP_PARAM(p->cParams.targetLength, opts, "targetlength", NUM2UINT);
         SETUP_PARAM(p->cParams.strategy, opts, "strategy", NUM2UINT);
+        SETUP_PARAM(p->fParams.contentSizeFlag, opts, "contentsize", RTEST);
+        SETUP_PARAM(p->fParams.checksumFlag, opts, "checksum", RTEST);
+        SETUP_PARAM(p->fParams.noDictIDFlag, opts, "nodictid", RTEST);
 #undef SETUP_PARAM
     }
 
