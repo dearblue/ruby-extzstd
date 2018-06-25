@@ -463,7 +463,7 @@ dec_read_args(int argc, VALUE argv[], VALUE self, VALUE *buf, ssize_t *size)
             if (NIL_P(argv[0])) {
                 *size = -1;
 
-                if (argc == 1) {
+                if (argc == 1 || NIL_P(argv[1])) {
                     *buf = rb_str_buf_new(EXT_READ_GROWUP_SIZE);
                 } else {
                     rb_check_type(argv[1], RUBY_T_STRING);
@@ -479,7 +479,7 @@ dec_read_args(int argc, VALUE argv[], VALUE self, VALUE *buf, ssize_t *size)
                              (intptr_t)*size);
                 }
 
-                if (argc == 1) {
+                if (argc == 1 || NIL_P(argv[1])) {
                     *buf = rb_str_buf_new(*size);
                 } else {
                     rb_check_type(argv[1], RUBY_T_STRING);
