@@ -169,7 +169,7 @@ init_constants(void)
     rb_define_const(mConstants, "ZSTD_SEARCHLOG_MIN", INT2NUM(ZSTD_SEARCHLOG_MIN));
     rb_define_const(mConstants, "ZSTD_SEARCHLENGTH_MAX", INT2NUM(ZSTD_SEARCHLENGTH_MAX));
     rb_define_const(mConstants, "ZSTD_SEARCHLENGTH_MIN", INT2NUM(ZSTD_SEARCHLENGTH_MIN));
-    rb_define_const(mConstants, "ZSTD_TARGETLENGTH_MAX", INT2NUM(ZSTD_TARGETLENGTH_MAX));
+    //rb_define_const(mConstants, "ZSTD_TARGETLENGTH_MAX", INT2NUM(ZSTD_TARGETLENGTH_MAX));
     rb_define_const(mConstants, "ZSTD_TARGETLENGTH_MIN", INT2NUM(ZSTD_TARGETLENGTH_MIN));
 
     rb_define_const(mConstants, "FAST", INT2NUM(ZSTD_fast));
@@ -191,7 +191,7 @@ init_constants(void)
     rb_define_const(mConstants, "SEARCHLOG_MIN", INT2NUM(ZSTD_SEARCHLOG_MIN));
     rb_define_const(mConstants, "SEARCHLENGTH_MAX", INT2NUM(ZSTD_SEARCHLENGTH_MAX));
     rb_define_const(mConstants, "SEARCHLENGTH_MIN", INT2NUM(ZSTD_SEARCHLENGTH_MIN));
-    rb_define_const(mConstants, "TARGETLENGTH_MAX", INT2NUM(ZSTD_TARGETLENGTH_MAX));
+    //rb_define_const(mConstants, "TARGETLENGTH_MAX", INT2NUM(ZSTD_TARGETLENGTH_MAX));
     rb_define_const(mConstants, "TARGETLENGTH_MIN", INT2NUM(ZSTD_TARGETLENGTH_MIN));
 }
 

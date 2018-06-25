@@ -145,7 +145,7 @@ enc_init(int argc, VALUE argv[], VALUE self)
 
     if (extzstd_params_p(params)) {
         ZSTD_parameters *paramsp = extzstd_getparams(params);
-        size_t s = ZSTD_initCStream_advanced(p->context, predictp, predictsize, *paramsp, 0);
+        size_t s = ZSTD_initCStream_advanced(p->context, predictp, predictsize, *paramsp, -1);
         extzstd_check_error(s);
     } else {
         size_t s = ZSTD_initCStream_usingDict(p->context, predictp, predictsize, aux_num2int(params, 1));

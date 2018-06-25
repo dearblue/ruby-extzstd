@@ -75,8 +75,12 @@ module Zstd
       begin
         yield e
       ensure
-        e.close rescue nil unless e.eof?
+        e.close unless e.eof?
       end
+    end
+
+    def self.encode(src, params = nil, dest: nil, dict: nil)
+      ContextLess.encode(src, dest || Aux::EMPTY_BUFFER.dup, nil, dict, params)
     end
   end
 
@@ -174,6 +178,13 @@ module Zstd
       ensure
         dec.close rescue nil
       end
+    end
+
+    def self.decode(src, dest: nil, dict: nil)
+      # NOTE: ContextLess.decode は伸長時のサイズが必要なため、常に利用できるわけではない
+      # ContextLess.decode(src, dest || Aux::EMPTY_BUFFER.dup, nil, dict)
+
+      new(StringIO.new(src), dict).read(nil, dest)
     end
   end
 
