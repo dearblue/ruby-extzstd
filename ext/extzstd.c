@@ -79,13 +79,15 @@ extzstd_make_errorf(ssize_t errcode, const char *fmt, ...)
     VALUE e;
 
     if (fmt && strlen(fmt) > 0) {
+        VALUE args[] = { SSIZET2NUM(errcode), Qnil };
         va_list va;
         va_start(va, fmt);
-        VALUE mesg = rb_vsprintf(fmt, va);
+        args[1] = rb_vsprintf(fmt, va);
         va_end(va);
-        return AUX_FUNCALL(extzstd_eError, id_initialize, SSIZET2NUM(errcode), mesg);
+        return rb_class_new_instance(2, args, extzstd_eError);
     } else {
-        return AUX_FUNCALL(extzstd_eError, id_initialize, SSIZET2NUM(errcode));
+        VALUE args[] = { SSIZET2NUM(errcode) };
+        return rb_class_new_instance(1, args, extzstd_eError);
     }
 }
 
