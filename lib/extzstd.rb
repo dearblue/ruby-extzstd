@@ -12,6 +12,32 @@ require "stringio"
 # This is ruby bindings for zstd <https://github.com/Cyan4973/zstd> the compression library.
 #
 module Zstd
+  module Aux
+    EMPTY_BUFFER = "".force_encoding(Encoding::BINARY).freeze
+  end
+
+  refine String do
+    def zstd(params = nil, dict: nil)
+      ContextLess.encode(self, Aux::EMPTY_BUFFER.dup, nil, dict, params)
+    end
+
+    def unzstd(size = nil, dict: nil)
+      Decoder.open(self, dict) { |d| return d.read(size) }
+    end
+  end
+
+  refine Object do
+    def zstd(params = nil, dict: nil, &block)
+      Encoder.open(self, params, dict, &block)
+    end
+
+    def unzstd(dict: nil, &block)
+      Decoder.open(self, dict, &block)
+    end
+  end
+
+  using Zstd
+
   #
   # call-seq:
   #   encode(src_string, level = nil, opts = {}) -> zstd string
@@ -26,12 +52,8 @@ module Zstd
   # [level = nil (integer or nil)]
   # [encode_params (instance of Zstd::Parameters)]
   # [opts dict: nil (string or nil)]
-  def self.encode(src, params = nil, dict: nil, &block)
-    if src.kind_of?(String)
-      return ContextLess.encode(src, Aux::EMPTY_BUFFER.dup, nil, dict, params)
-    end
-
-    Encoder.open(src, params, dict, &block)
+  def self.encode(src, *args, &block)
+    src.zstd(*args, &block)
   end
 
   #
@@ -40,25 +62,8 @@ module Zstd
   #   decode(zstd_stream, dict: nil) -> zstd decoder
   #   decode(zstd_stream, dict: nil) { |decoder| ... } -> yield returned value
   #
-  def self.decode(src, *args, dict: nil, &block)
-    if src.kind_of?(String)
-      case args.size
-      when 0
-        size = nil
-      when 1
-        size = args[0].to_i
-      else
-        raise ArgumentError, "wrong argument number (given #{args.size}, expect 1 or 2)"
-      end
-
-      Decoder.open(src, dict) { |d| return d.read(size) }
-    end
-
-    unless args.empty?
-      raise ArgumentError, "wrong argument number (given #{args.size}, expect 1)"
-    end
-
-    Decoder.open(src, dict, &block)
+  def self.decode(src, *args, &block)
+    src.unzstd(*args, &block)
   end
 
   StreamEncoder = Encoder
@@ -143,30 +148,6 @@ module Zstd
         q.breakable " "
         q.text "strategy=#{strategy}>"
       end
-    end
-  end
-
-  module Aux
-    EMPTY_BUFFER = "".force_encoding(Encoding::BINARY).freeze
-  end
-
-  refine String do
-    def zstd(*args)
-      Zstd::Encoder.encode self, *args
-    end
-
-    def unzstd(*args)
-      Zstd::Decoder.decode self, *args
-    end
-  end
-
-  refine Object do
-    def zstd(*args, &block)
-      Zstd::Encoder.open self, *args, &block
-    end
-
-    def unzstd(*args, &block)
-      Zstd::Decoder.open self, *args, &block
     end
   end
 end
