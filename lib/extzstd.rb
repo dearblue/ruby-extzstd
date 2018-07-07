@@ -17,7 +17,7 @@ module Zstd
   end
 
   refine String do
-    def zstd(params = nil, dict: nil)
+    def to_zstd(params = nil, dict: nil)
       ContextLess.encode(self, Aux::EMPTY_BUFFER.dup, nil, dict, params)
     end
 
@@ -27,7 +27,7 @@ module Zstd
   end
 
   refine Object do
-    def zstd(params = nil, dict: nil, &block)
+    def to_zstd(params = nil, dict: nil, &block)
       Encoder.open(self, params, dict, &block)
     end
 
@@ -53,7 +53,7 @@ module Zstd
   # [encode_params (instance of Zstd::Parameters)]
   # [opts dict: nil (string or nil)]
   def self.encode(src, *args, &block)
-    src.zstd(*args, &block)
+    src.to_zstd(*args, &block)
   end
 
   #
