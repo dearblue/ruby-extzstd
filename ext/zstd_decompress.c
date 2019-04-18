@@ -3,4 +3,6 @@
 #define visibility(v) visibility("hidden")
 
 #include "../contrib/zstd/lib/decompress/zstd_decompress.c"
+
+#undef CHECK_F
 #include "../contrib/zstd/lib/decompress/huf_decompress.c"

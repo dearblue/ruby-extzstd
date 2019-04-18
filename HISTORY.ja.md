@@ -1,5 +1,16 @@
 # extzstd の更新履歴
 
+## extzstd-0.3 (tryout)
+
+  * zstd-1.3.5 への更新
+  * Zstd::Encoder#write に文字列以外を与えた場合でも文字列に変換するようにして受け入れるように修正
+  * Zstd::Decoder#read の buf 引数として nil を与えた場合例外が発生していたため修正
+  * zstd に関する例外が発生する時、例外オブジェクトの生成に失敗していたため修正
+  * Zstd::EncodeParameter.new に新しいキーワード引数を追加
+  * Zstd::Encoder に #close と #pos メソッドを追加
+  * `.to_zstd` / `.unzstd` メソッドを `Zstd` リファインメントとして追加
+
+
 ## extzstd-0.2 (平成30年2月1日 木曜日)
 
   * zstd-1.3.3 への更新

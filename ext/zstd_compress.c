@@ -12,3 +12,4 @@
 #include "../contrib/zstd/lib/compress/zstd_lazy.c"
 #include "../contrib/zstd/lib/compress/zstd_ldm.c"
 #include "../contrib/zstd/lib/compress/zstd_opt.c"
+#include "../contrib/zstd/lib/compress/hist.c"
