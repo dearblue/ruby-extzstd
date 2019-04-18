@@ -160,6 +160,7 @@ init_constants(void)
     rb_define_const(mConstants, "ZSTD_BTLAZY2", INT2NUM(ZSTD_btlazy2));
     rb_define_const(mConstants, "ZSTD_BTOPT", INT2NUM(ZSTD_btopt));
     rb_define_const(mConstants, "ZSTD_BTULTRA", INT2NUM(ZSTD_btultra));
+    rb_define_const(mConstants, "ZSTD_BTULTRA2", INT2NUM(ZSTD_btultra2));
     rb_define_const(mConstants, "ZSTD_WINDOWLOG_MAX", INT2NUM(ZSTD_WINDOWLOG_MAX));
     rb_define_const(mConstants, "ZSTD_WINDOWLOG_MIN", INT2NUM(ZSTD_WINDOWLOG_MIN));
     rb_define_const(mConstants, "ZSTD_HASHLOG_MAX", INT2NUM(ZSTD_HASHLOG_MAX));
@@ -169,8 +170,8 @@ init_constants(void)
     rb_define_const(mConstants, "ZSTD_HASHLOG3_MAX", INT2NUM(ZSTD_HASHLOG3_MAX));
     rb_define_const(mConstants, "ZSTD_SEARCHLOG_MAX", INT2NUM(ZSTD_SEARCHLOG_MAX));
     rb_define_const(mConstants, "ZSTD_SEARCHLOG_MIN", INT2NUM(ZSTD_SEARCHLOG_MIN));
-    rb_define_const(mConstants, "ZSTD_SEARCHLENGTH_MAX", INT2NUM(ZSTD_SEARCHLENGTH_MAX));
-    rb_define_const(mConstants, "ZSTD_SEARCHLENGTH_MIN", INT2NUM(ZSTD_SEARCHLENGTH_MIN));
+    //rb_define_const(mConstants, "ZSTD_SEARCHLENGTH_MAX", INT2NUM(ZSTD_SEARCHLENGTH_MAX));
+    //rb_define_const(mConstants, "ZSTD_SEARCHLENGTH_MIN", INT2NUM(ZSTD_SEARCHLENGTH_MIN));
     //rb_define_const(mConstants, "ZSTD_TARGETLENGTH_MAX", INT2NUM(ZSTD_TARGETLENGTH_MAX));
     //rb_define_const(mConstants, "ZSTD_TARGETLENGTH_MIN", INT2NUM(ZSTD_TARGETLENGTH_MIN));
 
@@ -182,6 +183,7 @@ init_constants(void)
     rb_define_const(mConstants, "BTLAZY2", INT2NUM(ZSTD_btlazy2));
     rb_define_const(mConstants, "BTOPT", INT2NUM(ZSTD_btopt));
     rb_define_const(mConstants, "BTULTRA", INT2NUM(ZSTD_btultra));
+    rb_define_const(mConstants, "BTULTRA2", INT2NUM(ZSTD_btultra2));
     rb_define_const(mConstants, "WINDOWLOG_MAX", INT2NUM(ZSTD_WINDOWLOG_MAX));
     rb_define_const(mConstants, "WINDOWLOG_MIN", INT2NUM(ZSTD_WINDOWLOG_MIN));
     rb_define_const(mConstants, "HASHLOG_MAX", INT2NUM(ZSTD_HASHLOG_MAX));
@@ -191,8 +193,8 @@ init_constants(void)
     rb_define_const(mConstants, "HASHLOG3_MAX", INT2NUM(ZSTD_HASHLOG3_MAX));
     rb_define_const(mConstants, "SEARCHLOG_MAX", INT2NUM(ZSTD_SEARCHLOG_MAX));
     rb_define_const(mConstants, "SEARCHLOG_MIN", INT2NUM(ZSTD_SEARCHLOG_MIN));
-    rb_define_const(mConstants, "SEARCHLENGTH_MAX", INT2NUM(ZSTD_SEARCHLENGTH_MAX));
-    rb_define_const(mConstants, "SEARCHLENGTH_MIN", INT2NUM(ZSTD_SEARCHLENGTH_MIN));
+    //rb_define_const(mConstants, "SEARCHLENGTH_MAX", INT2NUM(ZSTD_SEARCHLENGTH_MAX));
+    //rb_define_const(mConstants, "SEARCHLENGTH_MIN", INT2NUM(ZSTD_SEARCHLENGTH_MIN));
     //rb_define_const(mConstants, "TARGETLENGTH_MAX", INT2NUM(ZSTD_TARGETLENGTH_MAX));
     //rb_define_const(mConstants, "TARGETLENGTH_MIN", INT2NUM(ZSTD_TARGETLENGTH_MIN));
 }
@@ -245,7 +247,7 @@ extzstd_params_alloc(ZSTD_parameters **p)
  * [opts contentlog: nil]
  * [opts hashlog: nil]
  * [opts searchlog: nil]
- * [opts searchlength: nil]
+ * [opts minmatch: nil]
  * [opts targetlength: nil]
  * [opts strategy: nil]
  */
@@ -278,7 +280,7 @@ params_init(int argc, VALUE argv[], VALUE v)
         SETUP_PARAM(p->cParams.chainLog, opts, "chainlog", NUM2UINT);
         SETUP_PARAM(p->cParams.hashLog, opts, "hashlog", NUM2UINT);
         SETUP_PARAM(p->cParams.searchLog, opts, "searchlog", NUM2UINT);
-        SETUP_PARAM(p->cParams.searchLength, opts, "searchlength", NUM2UINT);
+        SETUP_PARAM(p->cParams.minMatch, opts, "minmatch", NUM2UINT);
         SETUP_PARAM(p->cParams.targetLength, opts, "targetlength", NUM2UINT);
         SETUP_PARAM(p->cParams.strategy, opts, "strategy", NUM2UINT);
         SETUP_PARAM(p->fParams.contentSizeFlag, opts, "contentsize", RTEST);
@@ -327,7 +329,7 @@ IMP_PARAMS(params_windowlog, params_set_windowlog, windowLog);
 IMP_PARAMS(params_chainlog, params_set_chainlog, chainLog);
 IMP_PARAMS(params_hashlog, params_set_hashlog, hashLog);
 IMP_PARAMS(params_searchlog, params_set_searchlog, searchLog);
-IMP_PARAMS(params_searchlength, params_set_searchlength, searchLength);
+IMP_PARAMS(params_minmatch, params_set_minmatch, minMatch);
 IMP_PARAMS(params_targetlength, params_set_targetlength, targetLength);
 IMP_PARAMS(params_strategy, params_set_strategy, strategy);
 
@@ -380,8 +382,8 @@ params_s_get_preset(int argc, VALUE argv[], VALUE mod)
  * Document-method: Zstd::Parameters#hashlog=
  * Document-method: Zstd::Parameters#searchlog
  * Document-method: Zstd::Parameters#searchlog=
- * Document-method: Zstd::Parameters#searchlength
- * Document-method: Zstd::Parameters#searchlength=
+ * Document-method: Zstd::Parameters#minmatch
+ * Document-method: Zstd::Parameters#minmatch=
  * Document-method: Zstd::Parameters#targetlength
  * Document-method: Zstd::Parameters#targetlength=
  * Document-method: Zstd::Parameters#strategy
@@ -408,8 +410,8 @@ init_params(void)
     rb_define_method(extzstd_cParams, "hashlog=", RUBY_METHOD_FUNC(params_set_hashlog), 1);
     rb_define_method(extzstd_cParams, "searchlog", RUBY_METHOD_FUNC(params_searchlog), 0);
     rb_define_method(extzstd_cParams, "searchlog=", RUBY_METHOD_FUNC(params_set_searchlog), 1);
-    rb_define_method(extzstd_cParams, "searchlength", RUBY_METHOD_FUNC(params_searchlength), 0);
-    rb_define_method(extzstd_cParams, "searchlength=", RUBY_METHOD_FUNC(params_set_searchlength), 1);
+    rb_define_method(extzstd_cParams, "minmatch", RUBY_METHOD_FUNC(params_minmatch), 0);
+    rb_define_method(extzstd_cParams, "minmatch=", RUBY_METHOD_FUNC(params_set_minmatch), 1);
     rb_define_method(extzstd_cParams, "targetlength", RUBY_METHOD_FUNC(params_targetlength), 0);
     rb_define_method(extzstd_cParams, "targetlength=", RUBY_METHOD_FUNC(params_set_targetlength), 1);
     rb_define_method(extzstd_cParams, "strategy", RUBY_METHOD_FUNC(params_strategy), 0);
@@ -437,7 +439,8 @@ dict_s_train_from_buffer(VALUE mod, VALUE src, VALUE dict_capacity)
     size_t capa = NUM2SIZET(dict_capacity);
     VALUE dict = rb_str_buf_new(capa);
     size_t srcsize = RSTRING_LEN(src);
-    size_t s = ZDICT_trainFromBuffer(RSTRING_PTR(dict), capa, RSTRING_PTR(src), &srcsize, 1);
+    const ZDICT_legacy_params_t params = { 0 };
+    size_t s = ZDICT_trainFromBuffer_legacy(RSTRING_PTR(dict), capa, RSTRING_PTR(src), &srcsize, 1, params);
     extzstd_check_error(s);
     rb_str_set_len(dict, s);
     return dict;
