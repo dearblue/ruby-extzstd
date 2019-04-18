@@ -66,6 +66,13 @@ module Zstd
     src.unzstd(*args, &block)
   end
 
+  class << Zstd
+    alias compress encode
+    alias decompress decode
+    alias uncompress decode
+  end
+
+  Compressor = Encoder
   StreamEncoder = Encoder
 
   class Encoder
@@ -89,8 +96,14 @@ module Zstd
     def self.encode(src, params = nil, dest: nil, dict: nil)
       ContextLess.encode(src, dest || Aux::EMPTY_BUFFER.dup, nil, dict, params)
     end
+
+    class << Encoder
+      alias compress encode
+    end
   end
 
+  Uncompressor = Decoder
+  Decompressor = Decoder
   StreamDecoder = Decoder
 
   class Decoder
@@ -121,6 +134,11 @@ module Zstd
       # ContextLess.decode(src, dest || Aux::EMPTY_BUFFER.dup, nil, dict)
 
       new(StringIO.new(src), dict).read(nil, dest)
+    end
+
+    class << Decoder
+      alias decompress decode
+      alias uncompress decode
     end
   end
 
