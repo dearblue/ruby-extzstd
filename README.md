@@ -81,10 +81,10 @@ end
   * license: [BSD-2-clause License](LICENSE)
   * author: dearblue <mailto:dearblue@users.noreply.github.com>
   * project page: <https://github.com/dearblue/ruby-extzstd>
-  * support ruby: ruby-2.3+
+  * support ruby: ruby-2.4+
   * dependency ruby gems: (none)
   * dependency library: (none)
   * bundled external C library (git submodules):
-      * [zstd-1.3.5](https://github.com/facebook/zstd)
-        under selectable dual licensed ([BSD-3-clause License](https://github.com/facebook/zstd/blob/v1.3.5/LICENSE) and [GNU General Public License, version 2](https://github.com/facebook/zstd/blob/v1.3.5/COPYING))
+      * [zstd-1.4.0](https://github.com/facebook/zstd)
+        under selectable dual licensed ([BSD-3-clause License](https://github.com/facebook/zstd/blob/v1.4.0/LICENSE) and [GNU General Public License, version 2](https://github.com/facebook/zstd/blob/v1.4.0/COPYING))
         by [facebook](https://github.com/facebook)
