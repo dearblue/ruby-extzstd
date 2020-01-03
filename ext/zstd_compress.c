@@ -7,6 +7,8 @@
 
 #undef CHECK_F
 #include "../contrib/zstd/lib/compress/zstd_compress.c"
+#include "../contrib/zstd/lib/compress/zstd_compress_literals.c"
+#include "../contrib/zstd/lib/compress/zstd_compress_sequences.c"
 #include "../contrib/zstd/lib/compress/zstd_double_fast.c"
 #include "../contrib/zstd/lib/compress/zstd_fast.c"
 #include "../contrib/zstd/lib/compress/zstd_lazy.c"
