@@ -52,8 +52,8 @@ module Zstd
   # [level = nil (integer or nil)]
   # [encode_params (instance of Zstd::Parameters)]
   # [opts dict: nil (string or nil)]
-  def self.encode(src, *args, &block)
-    src.to_zstd(*args, &block)
+  def self.encode(src, *args, **opts, &block)
+    src.to_zstd(*args, **opts, &block)
   end
 
   #
@@ -62,8 +62,8 @@ module Zstd
   #   decode(zstd_stream, dict: nil) -> zstd decoder
   #   decode(zstd_stream, dict: nil) { |decoder| ... } -> yield returned value
   #
-  def self.decode(src, *args, &block)
-    src.unzstd(*args, &block)
+  def self.decode(src, *args, **opts, &block)
+    src.unzstd(*args, **opts, &block)
   end
 
   class << Zstd
