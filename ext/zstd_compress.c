@@ -1,6 +1,4 @@
-#define ZSTD_LEGACY_SUPPORT 1
-#define MEM_MODULE 1
-#define visibility(v) visibility("hidden")
+#include "libzstd_conf.h"
 
 #include "../contrib/zstd/lib/compress/fse_compress.c"
 #include "../contrib/zstd/lib/compress/huf_compress.c"
