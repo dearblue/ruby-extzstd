@@ -1,5 +1,13 @@
 # extzstd の更新履歴
 
+## extzstd-0.3.1 (令和2年10月3日 土曜日)
+
+  * zstd-1.4.5 への更新
+  * ruby-2.7 が警告するキーワード引数に関して修正
+  * ".so" ファイルの読み込みに `require` を使う  
+    参照: [extlz4#2](https://github.com/dearblue/ruby-extlz4/issues/2)
+
+
 ## extzstd-0.3 (平成31年4月)
 
   * zstd-1.4.0 への更新

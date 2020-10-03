@@ -76,7 +76,7 @@ end
 ## Specification
 
   * package name: extzstd
-  * version: 0.3
+  * version: 0.3.1
   * product quality: TECHNICAL PREVIEW, UNSTABLE
   * license: [BSD-2-clause License](LICENSE)
   * author: dearblue <mailto:dearblue@users.noreply.github.com>
