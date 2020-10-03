@@ -183,7 +183,7 @@ aux_const_dig_str_0(VALUE obj, const char *p[], const char **pp)
 #   define RBEXT_IMPORT __declspec(dllimport)
 #   define RBEXT_EXPORT __declspec(dllexport)
 #   define RBEXT_LOCAL
-#elif __GNUC__ >= 4 || __clang__
+#elif defined(__GNUC__) && __GNUC__ >= 4 || defined(__clang__)
 #   define RBEXT_IMPORT __attribute__((visibility("default")))
 #   define RBEXT_EXPORT __attribute__((visibility("default")))
 #   define RBEXT_LOCAL  __attribute__((visibility("hidden")))
