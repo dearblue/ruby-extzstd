@@ -2,7 +2,7 @@
 
 ver = RUBY_VERSION.slice(/\d+\.\d+/)
 soname = File.basename(__FILE__, ".rb") << ".so"
-require_relative File.join(ver, soname)
+require File.join(ver, soname)
 
 require_relative "extzstd/version"
 
