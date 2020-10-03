@@ -12,13 +12,21 @@ require "stringio"
 # This is ruby bindings for zstd <https://github.com/Cyan4973/zstd> the compression library.
 #
 module Zstd
-  module Aux
-    EMPTY_BUFFER = "".force_encoding(Encoding::BINARY).freeze
+  module Internals
+    unless String.method_defined? :b
+      refine String do
+        def b
+          dup.force_encoding(Encoding::BINARY)
+        end
+      end
+    end
   end
+
+  using Internals
 
   refine String do
     def to_zstd(params = nil, dict: nil)
-      ContextLess.encode(self, Aux::EMPTY_BUFFER.dup, nil, dict, params)
+      ContextLess.encode(self, "".b, nil, dict, params)
     end
 
     def unzstd(size = nil, dict: nil)
@@ -94,7 +102,7 @@ module Zstd
     end
 
     def self.encode(src, params = nil, dest: nil, dict: nil)
-      ContextLess.encode(src, dest || Aux::EMPTY_BUFFER.dup, nil, dict, params)
+      ContextLess.encode(src, dest || "".b, nil, dict, params)
     end
 
     class << Encoder
@@ -131,7 +139,7 @@ module Zstd
 
     def self.decode(src, dest: nil, dict: nil)
       # NOTE: ContextLess.decode は伸長時のサイズが必要なため、常に利用できるわけではない
-      # ContextLess.decode(src, dest || Aux::EMPTY_BUFFER.dup, nil, dict)
+      # ContextLess.decode(src, dest || "".b, nil, dict)
 
       new(StringIO.new(src), dict).read(nil, dest)
     end
