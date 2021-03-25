@@ -85,6 +85,6 @@ end
   * dependency ruby gems: (none)
   * dependency library: (none)
   * bundled external C library (git submodules):
-      * [zstd-1.4.0](https://github.com/facebook/zstd)
-        under selectable dual licensed ([BSD-3-clause License](https://github.com/facebook/zstd/blob/v1.4.0/LICENSE) and [GNU General Public License, version 2](https://github.com/facebook/zstd/blob/v1.4.0/COPYING))
+      * [zstd-1.4.9](https://github.com/facebook/zstd/blob/v1.4.9)
+        under selectable dual licensed ([3 clause BSD License](https://github.com/facebook/zstd/blob/v1.4.9/LICENSE) and [GNU General Public License, version 2](https://github.com/facebook/zstd/blob/v1.4.9/COPYING))
         by [facebook](https://github.com/facebook)
