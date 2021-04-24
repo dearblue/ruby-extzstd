@@ -5,8 +5,8 @@ This is unofficial ruby bindings for the data compression library
 
 "extzstd" is supported decompression with the legacy formats (zstd-0.1 - 0.7).
 
-  * [HISTORY (in Japanese)](HISTORY.ja.md)
-  * [Quick reference](QUICKREF.md)
+  - [HISTORY (in Japanese)](HISTORY.ja.md)
+  - [Quick reference](QUICKREF.md)
 
 
 ## HOW TO USE
@@ -89,16 +89,16 @@ p Ractor.new {
 
 ## Specification
 
-  * package name: extzstd
-  * version: 0.3.1
-  * product quality: TECHNICAL PREVIEW, UNSTABLE
-  * license: [BSD-2-clause License](LICENSE)
-  * author: dearblue <mailto:dearblue@users.noreply.github.com>
-  * project page: <https://github.com/dearblue/ruby-extzstd>
-  * support ruby: ruby-2.4+
-  * dependency ruby gems: (none)
-  * dependency library: (none)
-  * bundled external C library (git submodules):
-      * [zstd-1.4.9](https://github.com/facebook/zstd/blob/v1.4.9)
+  - package name: extzstd
+  - project page: <https://github.com/dearblue/ruby-extzstd>
+  - version: 0.3.1
+  - product quality: TECHNICAL PREVIEW, UNSTABLE
+  - license: [2 clause BSD License](LICENSE)
+  - author: dearblue
+  - support ruby: ruby-2.5+
+  - dependency ruby gems: (none)
+  - dependency library: (none)
+  - bundled external C library (git submodules):
+      - [zstd-1.4.9](https://github.com/facebook/zstd/blob/v1.4.9)
         under selectable dual licensed ([3 clause BSD License](https://github.com/facebook/zstd/blob/v1.4.9/LICENSE) and [GNU General Public License, version 2](https://github.com/facebook/zstd/blob/v1.4.9/COPYING))
         by [facebook](https://github.com/facebook)

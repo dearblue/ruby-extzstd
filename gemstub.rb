@@ -10,7 +10,7 @@ EOS
   s.homepage = "https://github.com/dearblue/ruby-extzstd/"
   s.license = "BSD-2-Clause"
   s.author = "dearblue"
-  s.email = "dearblue@users.noreply.github.com"
+  s.email = "dearblue@users.osdn.me"
 
   s.required_ruby_version = ">= 2.0"
   s.add_development_dependency "rake", ">= 12.0"
