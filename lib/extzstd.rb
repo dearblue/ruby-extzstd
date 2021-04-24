@@ -4,8 +4,6 @@ ver = RUBY_VERSION.slice(/\d+\.\d+/)
 soname = File.basename(__FILE__, ".rb") << ".so"
 require File.join(ver, soname)
 
-require_relative "extzstd/version"
-
 require "stringio"
 
 #
