@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <ruby.h>
 #include <ruby/thread.h>
+#include <ruby/version.h>
 
 #define ELEMENTOF(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
 #define ENDOF(ARRAY) (ARRAY + ELEMENTOF(ARRAY))
@@ -226,5 +227,9 @@ aux_string_expand_pointer(VALUE str, char **ptr, size_t size)
     rb_str_modify_expand(str, size);
     *ptr = RSTRING_PTR(str);
 }
+
+#if RUBY_API_VERSION_CODE >= 30000
+# define rb_obj_infect(dest, src) ((void)(dest), (void)(src))
+#endif
 
 #endif /* EXTZSTD_H */

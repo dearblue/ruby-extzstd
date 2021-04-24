@@ -9,11 +9,6 @@ class TestZstd < Test::Unit::TestCase
     src = "ABCDEFGabcdefg" * 50
     assert_equal(src, Zstd.decode(Zstd.encode(src), src.bytesize))
     #assert_raise(Zstd::Error) { Zstd.decode("", 1111) }
-    d1 = Zstd.encode(src)
-    assert_same(src.tainted?, Zstd.encode(src).tainted?)
-    src1 = src.dup
-    src1.taint
-    assert_same(src1.tainted?, Zstd.encode(src1).tainted?)
   end
 
   def test_huge
