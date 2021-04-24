@@ -73,6 +73,20 @@ end
 ```
 
 
+## Support `Ractor` (Ruby3 feature)
+
+Ruby3 の `Ractor` に対応しています。
+
+```ruby
+require "extzstd"
+
+using Zstd
+
+p Ractor.new {
+  Ractor.yield ("abcdefg" * 9).to_zstd, move: true
+}.take
+```
+
 ## Specification
 
   * package name: extzstd

@@ -7,6 +7,7 @@
 #include <common/zstd_internal.h> /* for MIN() */
 #include <zstd.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <ruby.h>
 #include <ruby/thread.h>
 

@@ -3,6 +3,10 @@
 #include <zstd_errors.h>
 #include <zdict.h>
 
+#ifndef RB_EXT_RACTOR_SAFE
+# define RB_EXT_RACTOR_SAFE(FEATURE) ((void)(FEATURE))
+#endif
+
 VALUE extzstd_mZstd;
 
 static ID id_initialize;
@@ -613,6 +617,8 @@ init_contextless(void)
 RBEXT_API void
 Init_extzstd(void)
 {
+    RB_EXT_RACTOR_SAFE(true);
+
     id_initialize = rb_intern("initialize");
     id_error_code = rb_intern("error_code");
 
