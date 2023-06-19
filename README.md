@@ -99,6 +99,6 @@ p Ractor.new {
   - dependency ruby gems: (none)
   - dependency library: (none)
   - bundled external C library (git submodules):
-      - [zstd-1.4.9](https://github.com/facebook/zstd/blob/v1.4.9)
-        under selectable dual licensed ([3 clause BSD License](https://github.com/facebook/zstd/blob/v1.4.9/LICENSE) and [GNU General Public License, version 2](https://github.com/facebook/zstd/blob/v1.4.9/COPYING))
+      - [zstd-1.5.5](https://github.com/facebook/zstd/blob/v1.5.5)
+        under selectable dual licensed ([3 clause BSD License](https://github.com/facebook/zstd/blob/v1.5.5/LICENSE) and [GNU General Public License, version 2](https://github.com/facebook/zstd/blob/v1.5.5/COPYING))
         by [facebook](https://github.com/facebook)

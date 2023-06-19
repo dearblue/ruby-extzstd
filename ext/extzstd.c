@@ -171,13 +171,14 @@ init_constants(void)
     rb_define_const(mConstants, "ZSTD_HASHLOG_MIN", INT2NUM(ZSTD_HASHLOG_MIN));
     rb_define_const(mConstants, "ZSTD_CHAINLOG_MAX", INT2NUM(ZSTD_CHAINLOG_MAX));
     rb_define_const(mConstants, "ZSTD_CHAINLOG_MIN", INT2NUM(ZSTD_CHAINLOG_MIN));
-    rb_define_const(mConstants, "ZSTD_HASHLOG3_MAX", INT2NUM(ZSTD_HASHLOG3_MAX));
     rb_define_const(mConstants, "ZSTD_SEARCHLOG_MAX", INT2NUM(ZSTD_SEARCHLOG_MAX));
     rb_define_const(mConstants, "ZSTD_SEARCHLOG_MIN", INT2NUM(ZSTD_SEARCHLOG_MIN));
-    //rb_define_const(mConstants, "ZSTD_SEARCHLENGTH_MAX", INT2NUM(ZSTD_SEARCHLENGTH_MAX));
-    //rb_define_const(mConstants, "ZSTD_SEARCHLENGTH_MIN", INT2NUM(ZSTD_SEARCHLENGTH_MIN));
-    //rb_define_const(mConstants, "ZSTD_TARGETLENGTH_MAX", INT2NUM(ZSTD_TARGETLENGTH_MAX));
-    //rb_define_const(mConstants, "ZSTD_TARGETLENGTH_MIN", INT2NUM(ZSTD_TARGETLENGTH_MIN));
+    rb_define_const(mConstants, "ZSTD_MINMATCH_MAX", INT2NUM(ZSTD_MINMATCH_MAX));
+    rb_define_const(mConstants, "ZSTD_MINMATCH_MIN", INT2NUM(ZSTD_MINMATCH_MIN));
+    rb_define_const(mConstants, "ZSTD_TARGETLENGTH_MAX", INT2NUM(ZSTD_TARGETLENGTH_MAX));
+    rb_define_const(mConstants, "ZSTD_TARGETLENGTH_MIN", INT2NUM(ZSTD_TARGETLENGTH_MIN));
+    rb_define_const(mConstants, "ZSTD_STRATEGY_MIN", INT2NUM(ZSTD_STRATEGY_MIN));
+    rb_define_const(mConstants, "ZSTD_STRATEGY_MAX", INT2NUM(ZSTD_STRATEGY_MAX));
 
     rb_define_const(mConstants, "FAST", INT2NUM(ZSTD_fast));
     rb_define_const(mConstants, "DFAST", INT2NUM(ZSTD_dfast));
@@ -194,13 +195,15 @@ init_constants(void)
     rb_define_const(mConstants, "HASHLOG_MIN", INT2NUM(ZSTD_HASHLOG_MIN));
     rb_define_const(mConstants, "CHAINLOG_MAX", INT2NUM(ZSTD_CHAINLOG_MAX));
     rb_define_const(mConstants, "CHAINLOG_MIN", INT2NUM(ZSTD_CHAINLOG_MIN));
-    rb_define_const(mConstants, "HASHLOG3_MAX", INT2NUM(ZSTD_HASHLOG3_MAX));
     rb_define_const(mConstants, "SEARCHLOG_MAX", INT2NUM(ZSTD_SEARCHLOG_MAX));
     rb_define_const(mConstants, "SEARCHLOG_MIN", INT2NUM(ZSTD_SEARCHLOG_MIN));
-    //rb_define_const(mConstants, "SEARCHLENGTH_MAX", INT2NUM(ZSTD_SEARCHLENGTH_MAX));
-    //rb_define_const(mConstants, "SEARCHLENGTH_MIN", INT2NUM(ZSTD_SEARCHLENGTH_MIN));
-    //rb_define_const(mConstants, "TARGETLENGTH_MAX", INT2NUM(ZSTD_TARGETLENGTH_MAX));
-    //rb_define_const(mConstants, "TARGETLENGTH_MIN", INT2NUM(ZSTD_TARGETLENGTH_MIN));
+    rb_define_const(mConstants, "MINMATCH_MAX", INT2NUM(ZSTD_MINMATCH_MAX));
+    rb_define_const(mConstants, "MINMATCH_MIN", INT2NUM(ZSTD_MINMATCH_MIN));
+    rb_define_const(mConstants, "TARGETLENGTH_MAX", INT2NUM(ZSTD_TARGETLENGTH_MAX));
+    rb_define_const(mConstants, "TARGETLENGTH_MIN", INT2NUM(ZSTD_TARGETLENGTH_MIN));
+    rb_define_const(mConstants, "STRATEGY_MIN", INT2NUM(ZSTD_STRATEGY_MIN));
+    rb_define_const(mConstants, "STRATEGY_MAX", INT2NUM(ZSTD_STRATEGY_MAX));
+
 }
 
 /*
