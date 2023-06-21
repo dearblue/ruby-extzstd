@@ -10,12 +10,13 @@ $INCFLAGS = %w(
   -I$(srcdir)/../contrib/zstd/lib/legacy
 ).join(" ") + " #$INCFLAGS"
 
-#dir = File.dirname(__FILE__).gsub(/[\[\{\?\*]/, "[\\0]")
-#filepattern = "{.,../contrib/zstd}/**/*.c"
-#target = File.join(dir, filepattern)
-#files = Dir.glob(target).sort.map { |n| File.basename n }
-#$srcs = files
-#$VPATH.push "$(srcdir)/../contrib/zstd", "$(srcdir)/../contrib/zstd/legacy"
+#if libzstd が 1.5.1 以降で gcc/clang であれば
+  dir = __dir__
+  dir1 = dir.gsub(/[\[\{\?\*]/, "[\\0]")
+  filepattern = "**/*.[cS]"
+  target = File.join(dir1, filepattern)
+  $srcs = Dir.glob(target).sort
+#end
 
 if RbConfig::CONFIG["arch"] =~ /mingw/i
   $LDFLAGS << " -static-libgcc" if try_ldflags("-static-libgcc")
