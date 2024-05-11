@@ -2,6 +2,19 @@
 
 require "mkmf"
 
+using Module.new {
+  refine Object do
+    def has_function_modifier?(modifier_code)
+      try_compile(<<~CODE)
+        #{modifier_code}
+        void
+        func1(void) {
+        }
+      CODE
+    end
+  end
+}
+
 $INCFLAGS = %w(
   -I$(srcdir)/../contrib
   -I$(srcdir)/../contrib/zstd/lib
@@ -26,9 +39,14 @@ __attribute__ ((visibility("hidden"))) int conftest(void) { return 0; }
   VISIBILITY
     if try_cflags("-fvisibility=hidden")
       $CFLAGS << " -fvisibility=hidden"
-      $defs << %('-DRBEXT_API=__attribute__ ((visibility("default")))')
+      $defs << %(-DRBEXT_API='__attribute__ ((visibility("default")))')
     end
   end
 end
+
+mod = %w(__declspec(noreturn) __attribute__((__noreturn__)) [[noreturn]] _Noreturn).find { |m|
+  has_function_modifier?(m)
+}
+$defs << %(-DRBEXT_NORETURN='#{mod}')
 
 create_makefile File.join(RUBY_VERSION.slice(/\d+\.\d+/), "extzstd")

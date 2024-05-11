@@ -35,7 +35,7 @@ extern VALUE extzstd_eError;
 extern void init_extzstd_stream(void);
 extern void extzstd_init_buffered(void);
 extern void extzstd_init_stream(void);
-extern void extzstd_error(ssize_t errcode);
+extern RBEXT_NORETURN void extzstd_error(ssize_t errcode);
 extern void extzstd_check_error(ssize_t errcode);
 extern VALUE extzstd_make_error(ssize_t errcode);
 extern VALUE extzstd_make_errorf(ssize_t errcode, const char *fmt, ...);
@@ -44,7 +44,7 @@ extern ZSTD_parameters *extzstd_getparams(VALUE v);
 extern int extzstd_params_p(VALUE v);
 extern VALUE extzstd_params_alloc(ZSTD_parameters **p);
 
-static inline void
+static RBEXT_NORETURN inline void
 referror(VALUE v)
 {
     rb_raise(rb_eRuntimeError,
@@ -52,7 +52,7 @@ referror(VALUE v)
              rb_obj_classname(v), (void *)v);
 }
 
-static inline void
+static RBEXT_NORETURN inline void
 reiniterror(VALUE v)
 {
     rb_raise(rb_eRuntimeError,
@@ -200,14 +200,14 @@ aux_const_dig_str_0(VALUE obj, const char *p[], const char **pp)
 #endif
 
 
-static void
+static inline void
 aux_string_pointer(VALUE str, const char **ptr, size_t *size)
 {
     rb_check_type(str, RUBY_T_STRING);
     RSTRING_GETMEM(str, *ptr, *size);
 }
 
-static void
+static inline void
 aux_string_pointer_with_nil(VALUE str, const char **ptr, size_t *size)
 {
     if (NIL_P(str)) {
@@ -218,7 +218,7 @@ aux_string_pointer_with_nil(VALUE str, const char **ptr, size_t *size)
     }
 }
 
-static void
+static inline void
 aux_string_expand_pointer(VALUE str, char **ptr, size_t size)
 {
     rb_check_type(str, RUBY_T_STRING);

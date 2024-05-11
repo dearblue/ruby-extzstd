@@ -71,6 +71,7 @@ extzstd_check_error(ssize_t errcode)
     }
 }
 
+RBEXT_NORETURN
 void
 extzstd_error(ssize_t errcode)
 {
@@ -80,8 +81,6 @@ extzstd_error(ssize_t errcode)
 VALUE
 extzstd_make_errorf(ssize_t errcode, const char *fmt, ...)
 {
-    VALUE e;
-
     if (fmt && strlen(fmt) > 0) {
         VALUE args[] = { SSIZET2NUM(errcode), Qnil };
         va_list va;
@@ -634,4 +633,7 @@ Init_extzstd(void)
     init_dictionary();
     init_contextless();
     extzstd_init_stream();
+
+    (void)params_alloc_dummy;
+    (void)getparamsp;
 }

@@ -282,6 +282,10 @@ init_encoder(void)
     rb_define_alias(cStreamEncoder, "flush", "sync");
     rb_define_alias(cStreamEncoder, "end", "close");
     rb_define_alias(cStreamEncoder, "finish", "close");
+
+    (void)encoder_alloc_dummy;
+    (void)getencoderp;
+    (void)encoder_p;
 }
 
 /*
@@ -402,7 +406,7 @@ dec_init(int argc, VALUE argv[], VALUE self)
 static int
 dec_read_fetch(VALUE o, struct decoder *p)
 {
-    if (!p->inbuf.src || NIL_P(p->readbuf) || p->inbuf.pos >= RSTRING_LEN(p->readbuf)) {
+    if (!p->inbuf.src || NIL_P(p->readbuf) || p->inbuf.pos >= (size_t)RSTRING_LEN(p->readbuf)) {
         aux_str_buf_recycle(&p->readbuf, EXT_PARTIAL_READ_SIZE);
         VALUE st = AUX_FUNCALL(p->inport, id_read, INT2FIX(EXT_PARTIAL_READ_SIZE), p->readbuf);
         if (NIL_P(st)) { return -1; }
@@ -427,7 +431,7 @@ dec_read_decode(VALUE o, struct decoder *p, char *buf, ssize_t size)
 
     ZSTD_outBuffer output = { buf, size, 0 };
 
-    while (size < 0 || output.pos < size) {
+    while (size < 0 || output.pos < (size_t)size) {
         if (dec_read_fetch(o, p) != 0) {
             if (p->reached_eof == 0) {
                 rb_raise(rb_eRuntimeError,
@@ -606,6 +610,10 @@ init_decoder(void)
     rb_define_method(cStreamDecoder, "reset", dec_reset, 0);
     rb_define_method(cStreamDecoder, "sizeof", dec_sizeof, 0);
     rb_define_method(cStreamDecoder, "pos", dec_pos, 0);
+
+    (void)decoder_alloc_dummy;
+    (void)getdecoderp;
+    (void)decoder_p;
 }
 
 /*
