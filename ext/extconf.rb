@@ -44,7 +44,7 @@ __attribute__ ((visibility("hidden"))) int conftest(void) { return 0; }
   end
 end
 
-mod = %w(__declspec(noreturn) __attribute__((__noreturn__)) [[noreturn]] _Noreturn).find { |m|
+mod = %w(__attribute__((__noreturn__)) __declspec(noreturn) [[noreturn]] _Noreturn).find { |m|
   has_function_modifier?(m)
 }
 $defs << %(-DRBEXT_NORETURN='#{mod}')

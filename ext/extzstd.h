@@ -232,4 +232,31 @@ aux_string_expand_pointer(VALUE str, char **ptr, size_t size)
 # define rb_obj_infect(dest, src) ((void)(dest), (void)(src))
 #endif
 
+#define MAKE_AUX_FUNC(auxdecl, funcall, cleanup)                        \
+    static inline size_t                                                \
+    auxdecl                                                             \
+    {                                                                   \
+        size_t s = funcall;                                             \
+                                                                        \
+        if (ZSTD_isError(s)) {                                          \
+            cleanup;                                                    \
+            extzstd_error(s);                                           \
+        }                                                               \
+                                                                        \
+        return s;                                                       \
+    }                                                                   \
+
+MAKE_AUX_FUNC(aux_ZSTD_CCtx_reset(ZSTD_CCtx *zstd, ZSTD_ResetDirective reset),
+              ZSTD_CCtx_reset(zstd, reset),
+              ZSTD_freeCCtx(zstd))
+MAKE_AUX_FUNC(aux_ZSTD_CCtx_setParameter(ZSTD_CCtx *ctx, ZSTD_cParameter param, int value),
+              ZSTD_CCtx_setParameter(ctx, param, value),
+              ZSTD_freeCCtx(ctx))
+MAKE_AUX_FUNC(aux_ZSTD_CCtx_setPledgedSrcSize(ZSTD_CCtx *ctx, unsigned long long pledgedSrcSize),
+              ZSTD_CCtx_setPledgedSrcSize(ctx, pledgedSrcSize),
+              ZSTD_freeCCtx(ctx))
+MAKE_AUX_FUNC(aux_ZSTD_CCtx_loadDictionary(ZSTD_CCtx *ctx, const void* dict, size_t dictSize),
+              ZSTD_CCtx_loadDictionary(ctx, dict, dictSize),
+              ZSTD_freeCCtx(ctx))
+
 #endif /* EXTZSTD_H */

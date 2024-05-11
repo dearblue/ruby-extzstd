@@ -129,10 +129,6 @@ enc_init(int argc, VALUE argv[], VALUE self)
                 rb_obj_classname(self), (void *)self);
     }
 
-    AUX_TRY_WITH_GC(
-            p->context = ZSTD_createCStream(),
-            "failed ZSTD_createCStream()");
-
     const void *predictp;
     size_t predictsize;
     if (NIL_P(predict)) {
@@ -144,13 +140,39 @@ enc_init(int argc, VALUE argv[], VALUE self)
         RSTRING_GETMEM(predict, predictp, predictsize);
     }
 
+    AUX_TRY_WITH_GC(
+            p->context = ZSTD_createCStream(),
+            "failed ZSTD_createCStream()");
+
     if (extzstd_params_p(params)) {
         ZSTD_parameters *paramsp = extzstd_getparams(params);
-        size_t s = ZSTD_initCStream_advanced(p->context, predictp, predictsize, *paramsp, -1);
-        extzstd_check_error(s);
+        ZSTD_CCtx *zstd = p->context;
+        p->context = NULL; // 一時的に無効化する
+
+        aux_ZSTD_CCtx_reset(zstd, ZSTD_reset_session_and_parameters);
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_windowLog, paramsp->cParams.windowLog);
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_chainLog, paramsp->cParams.chainLog);
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_hashLog, paramsp->cParams.hashLog);
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_searchLog, paramsp->cParams.searchLog);
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_minMatch, paramsp->cParams.minMatch);
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_targetLength, paramsp->cParams.targetLength);
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_strategy, paramsp->cParams.strategy);
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_contentSizeFlag, paramsp->fParams.contentSizeFlag);
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_checksumFlag, paramsp->fParams.checksumFlag);
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_dictIDFlag, !paramsp->fParams.noDictIDFlag);
+        aux_ZSTD_CCtx_loadDictionary(zstd, predictp, predictsize);
+
+        p->context = zstd;
     } else {
-        size_t s = ZSTD_initCStream_usingDict(p->context, predictp, predictsize, aux_num2int(params, 1));
-        extzstd_check_error(s);
+        int clevel = aux_num2int(params, ZSTD_CLEVEL_DEFAULT);
+        ZSTD_CCtx *zstd = p->context;
+        p->context = NULL; // 一時的に無効化する
+
+        aux_ZSTD_CCtx_reset(zstd, ZSTD_reset_session_and_parameters);
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_compressionLevel, clevel);
+        aux_ZSTD_CCtx_loadDictionary(zstd, predictp, predictsize);
+
+        p->context = zstd;
     }
 
     p->predict = predict;
@@ -242,11 +264,18 @@ static VALUE
 enc_reset(VALUE self, VALUE pledged_srcsize)
 {
     /*
-     * ZSTDLIB_API size_t ZSTD_resetCStream(ZSTD_CStream* zcs, unsigned long long pledgedSrcSize);
+     * ZSTDLIB_API size_t ZSTD_CCtx_reset(ZSTD_CCtx* cctx, ZSTD_ResetDirective reset);
      */
 
-    size_t s = ZSTD_resetCStream(encoder_context(self)->context, NUM2ULL(pledged_srcsize));
+    size_t s = ZSTD_CCtx_reset(encoder_context(self)->context, ZSTD_reset_session_only);
     extzstd_check_error(s);
+
+    if (pledged_srcsize == Qnil) {
+        ZSTD_CCtx_setPledgedSrcSize(encoder_context(self)->context, ZSTD_CONTENTSIZE_UNKNOWN);
+    } else {
+        ZSTD_CCtx_setPledgedSrcSize(encoder_context(self)->context, NUM2ULL(pledged_srcsize));
+    }
+
     return self;
 }
 
@@ -296,7 +325,7 @@ static VALUE cStreamDecoder;
 
 struct decoder
 {
-    ZSTD_DStream *context;
+    ZSTD_DCtx *context;
     VALUE inport;
     VALUE readbuf;
     VALUE predict;
@@ -318,7 +347,7 @@ dec_free(void *pp)
 {
     struct decoder *p = (struct decoder *)pp;
     if (p->context) {
-        ZSTD_freeDStream(p->context);
+        ZSTD_freeDCtx(p->context);
         p->context = NULL;
     }
     xfree(p);
@@ -357,6 +386,8 @@ static VALUE
 dec_init(int argc, VALUE argv[], VALUE self)
 {
     /*
+     * ZSTDLIB_API size_t ZSTD_DCtx_loadDictionary(ZSTD_DCtx* dctx, const void* dict, size_t dictSize);
+     *
      * ZSTDLIB_API size_t ZSTD_initDStream(ZSTD_DStream* zds);
      * ZSTDLIB_API size_t ZSTD_initDStream_usingDict(ZSTD_DStream* zds, const void* dict, size_t dictSize);
      */
@@ -384,16 +415,19 @@ dec_init(int argc, VALUE argv[], VALUE self)
     }
 
     AUX_TRY_WITH_GC(
-            p->context = ZSTD_createDStream(),
-            "failed ZSTD_createDStream()");
+            p->context = ZSTD_createDCtx(),
+            "failed ZSTD_createDCtx()");
 
+    //ZSTD_DCtx_reset
+    //ZSTD_DCtx_loadDictionary
     if (NIL_P(predict)) {
-        size_t s = ZSTD_initDStream(p->context);
-        extzstd_check_error(s);
+        //size_t s = ZSTD_initDStream(p->context);
+        //extzstd_check_error(s);
     } else {
         rb_check_type(predict, RUBY_T_STRING);
         predict = rb_str_new_frozen(predict);
-        size_t s = ZSTD_initDStream_usingDict(p->context, RSTRING_PTR(predict), RSTRING_LEN(predict));
+        //size_t s = ZSTD_initDStream_usingDict(p->context, RSTRING_PTR(predict), RSTRING_LEN(predict));
+        size_t s = ZSTD_DCtx_loadDictionary(p->context, RSTRING_PTR(predict), RSTRING_LEN(predict));
         extzstd_check_error(s);
     }
 
@@ -425,6 +459,7 @@ dec_read_fetch(VALUE o, struct decoder *p)
 static size_t
 dec_read_decode(VALUE o, struct decoder *p, char *buf, ssize_t size)
 {
+
     if (p->reached_eof != 0) {
         return 0;
     }
@@ -568,10 +603,9 @@ dec_close(VALUE self)
 static VALUE
 dec_reset(VALUE self)
 {
-    /*
-     * ZSTDLIB_API size_t ZSTD_resetDStream(ZSTD_DStream* zds);
-     */
-    size_t s = ZSTD_resetDStream(decoder_context(self)->context);
+    //> ZSTDLIB_API size_t ZSTD_DCtx_reset(ZSTD_DCtx* dctx, ZSTD_ResetDirective reset);
+
+    size_t s = ZSTD_DCtx_reset(decoder_context(self)->context, ZSTD_reset_session_only);
     extzstd_check_error(s);
     return self;
 }

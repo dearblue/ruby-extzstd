@@ -460,17 +460,22 @@ static VALUE
 dict_s_add_entropy_tables_from_buffer(VALUE mod, VALUE dict, VALUE dict_capacity, VALUE sample)
 {
     /*
-     * size_t ZDICT_addEntropyTablesFromBuffer(
-     *      void* dictBuffer, size_t dictContentSize, size_t dictBufferCapacity,
-     *      const void* samplesBuffer, const size_t* samplesSizes, unsigned nbSamples);
+     * ZDICTLIB_API size_t ZDICT_finalizeDictionary(void* dstDictBuffer, size_t maxDictSize,
+     *                                 const void* dictContent, size_t dictContentSize,
+     *                                 const void* samplesBuffer, const size_t* samplesSizes, unsigned nbSamples,
+     *                                 ZDICT_params_t parameters);
      */
 
     rb_check_type(dict, RUBY_T_STRING);
     rb_check_type(sample, RUBY_T_STRING);
     size_t capa = NUM2SIZET(dict_capacity);
     aux_str_modify_expand(dict, capa);
+    char *destptr = RSTRING_PTR(dict);
+    size_t destlen = RSTRING_LEN(dict);
+    const char *sampleptr = RSTRING_PTR(sample);
     size_t samplesize = RSTRING_LEN(sample);
-    size_t s = ZDICT_addEntropyTablesFromBuffer(RSTRING_PTR(dict), RSTRING_LEN(dict), capa, RSTRING_PTR(sample), &samplesize, 1);
+    ZDICT_params_t params = { 0, 0, 0 };
+    size_t s = ZDICT_finalizeDictionary(destptr, capa, destptr, destlen, sampleptr, &samplesize, 1, params);
     extzstd_check_error(s);
     rb_str_set_len(dict, s);
     return dict;
@@ -538,15 +543,32 @@ less_s_encode(VALUE mod, VALUE src, VALUE dest, VALUE maxdest, VALUE predict, VA
 
     if (extzstd_params_p(params)) {
         /*
-         * ZSTDLIB_API size_t ZSTD_compress_advanced(
-         *      ZSTD_CCtx* ctx,
-         *      void* dst, size_t dstCapacity,
-         *      const void* src, size_t srcSize,
-         *      const void* dict,size_t dictSize,
-         *      ZSTD_parameters params);
+         * ZSTDLIB_API size_t ZSTD_compress2( ZSTD_CCtx* cctx,
+         *                                    void* dst, size_t dstCapacity,
+         *                              const void* src, size_t srcSize);
+         * ZSTDLIB_API size_t ZSTD_CCtx_setParameter(ZSTD_CCtx* cctx, ZSTD_cParameter param, int value);
+         * ZSTDLIB_API size_t ZSTD_CCtx_setPledgedSrcSize(ZSTD_CCtx* cctx, unsigned long long pledgedSrcSize);
          */
         ZSTD_CCtx *zstd = ZSTD_createCCtx();
-        size_t s = ZSTD_compress_advanced(zstd, r, rsize, q, qsize, d, dsize, *extzstd_getparams(params));
+        ZSTD_parameters *param = extzstd_getparams(params);
+
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_windowLog, param->cParams.windowLog);
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_chainLog, param->cParams.chainLog);
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_hashLog, param->cParams.hashLog);
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_searchLog, param->cParams.searchLog);
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_minMatch, param->cParams.minMatch);
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_targetLength, param->cParams.targetLength);
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_strategy, param->cParams.strategy);
+
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_contentSizeFlag, param->fParams.contentSizeFlag);
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_checksumFlag, param->fParams.checksumFlag);
+        aux_ZSTD_CCtx_setParameter(zstd, ZSTD_c_dictIDFlag, !param->fParams.noDictIDFlag);
+
+        //aux_ZSTD_CCtx_setPledgedSrcSize(zstd, (unsigned long long)qsize);
+
+        aux_ZSTD_CCtx_loadDictionary(zstd, d, dsize);
+
+        size_t s = ZSTD_compress2(zstd, r, rsize, q, qsize);
         ZSTD_freeCCtx(zstd);
         extzstd_check_error(s);
         rb_str_set_len(dest, s);
@@ -586,7 +608,7 @@ less_s_decode(VALUE mod, VALUE src, VALUE dest, VALUE maxdest, VALUE predict)
     aux_string_pointer(src, &q, &qsize);
 
     char *r;
-    size_t rsize = (NIL_P(maxdest)) ? ZSTD_getDecompressedSize(q, qsize) : NUM2SIZET(maxdest);
+    size_t rsize = (NIL_P(maxdest)) ? ZSTD_getFrameContentSize(q, qsize) : NUM2SIZET(maxdest);
     aux_string_expand_pointer(dest, &r, rsize);
     rb_obj_infect(dest, src);
 
