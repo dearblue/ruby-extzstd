@@ -91,7 +91,7 @@ p Ractor.new {
 
   - package name: extzstd
   - project page: <https://github.com/dearblue/ruby-extzstd>
-  - version: 0.3.3
+  - version: 0.4
   - product quality: TECHNICAL PREVIEW, UNSTABLE
   - license: [2 clause BSD License](LICENSE)
   - author: dearblue
