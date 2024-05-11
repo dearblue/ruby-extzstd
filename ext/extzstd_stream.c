@@ -9,12 +9,13 @@ enum {
 };
 
 static inline VALUE
-aux_str_buf_recycle(VALUE str, size_t capacity)
+aux_str_buf_recycle(VALUE *str, size_t capacity)
 {
-    if (!RTEST(str) || rb_obj_frozen_p(str) || !rb_type_p(str, RUBY_T_STRING)) {
-        return rb_str_buf_new(capacity);
+    if (!RTEST(*str) || rb_obj_frozen_p(*str) || !rb_type_p(*str, RUBY_T_STRING)) {
+        *str = rb_str_buf_new(capacity);
+        return *str;
     } else {
-        return aux_str_modify_expand(str, capacity);
+        return aux_str_modify_expand(*str, capacity);
     }
 }
 
@@ -170,7 +171,7 @@ enc_write(VALUE self, VALUE src)
     ZSTD_inBuffer input = { RSTRING_PTR(src), RSTRING_LEN(src), 0 };
 
     while (input.pos < input.size) {
-        p->destbuf = aux_str_buf_recycle(p->destbuf, ZSTD_CStreamOutSize() * 2);
+        aux_str_buf_recycle(&p->destbuf, ZSTD_CStreamOutSize() * 2);
         rb_str_set_len(p->destbuf, 0);
         rb_obj_infect(self, src);
         rb_obj_infect(p->destbuf, self);
@@ -195,7 +196,7 @@ enc_sync(VALUE self)
      */
 
     struct encoder *p = encoder_context(self);
-    aux_str_buf_recycle(p->destbuf, ZSTD_CStreamOutSize());
+    aux_str_buf_recycle(&p->destbuf, ZSTD_CStreamOutSize());
     rb_str_set_len(p->destbuf, 0);
     rb_obj_infect(p->destbuf, self);
     ZSTD_outBuffer output = { RSTRING_PTR(p->destbuf), rb_str_capacity(p->destbuf), 0 };
@@ -216,7 +217,7 @@ enc_close(VALUE self)
      */
 
     struct encoder *p = encoder_context(self);
-    aux_str_buf_recycle(p->destbuf, ZSTD_CStreamOutSize());
+    aux_str_buf_recycle(&p->destbuf, ZSTD_CStreamOutSize());
     rb_str_set_len(p->destbuf, 0);
     rb_obj_infect(p->destbuf, self);
     ZSTD_outBuffer output = { RSTRING_PTR(p->destbuf), rb_str_capacity(p->destbuf), 0 };
@@ -402,7 +403,7 @@ static int
 dec_read_fetch(VALUE o, struct decoder *p)
 {
     if (!p->inbuf.src || NIL_P(p->readbuf) || p->inbuf.pos >= RSTRING_LEN(p->readbuf)) {
-        p->readbuf = aux_str_buf_recycle(p->readbuf, EXT_PARTIAL_READ_SIZE);
+        aux_str_buf_recycle(&p->readbuf, EXT_PARTIAL_READ_SIZE);
         VALUE st = AUX_FUNCALL(p->inport, id_read, INT2FIX(EXT_PARTIAL_READ_SIZE), p->readbuf);
         if (NIL_P(st)) { return -1; }
         rb_check_type(st, RUBY_T_STRING);
